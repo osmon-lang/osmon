@@ -1,0 +1,34 @@
+name: Test CI
+
+on: [push, pull_request]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install required libs (gcc, llvm, clang, libgccjit)
+        run: sudo apt-get install build-essential llvm clang libgccjit-12-dev
+
+      - name: Include libgccjit library and header files
+        run: |
+            sudo ln -s /usr/lib/gcc/x86_64-linux-gnu/12/libgccjit.so /usr/lib/libgccjit.so
+            sudo ln -s /usr/lib/gcc/x86_64-linux-gnu/12/include/libgccjit.h /usr/include/libgccjit.h
+            sudo ln -s /usr/lib/gcc/x86_64-linux-gnu/12/include/libgccjit++.h /usr/include/libgccjit++.h
+
+      - name: Change rust channel
+        run: rustup default nightly
+
+      - name: Build
+        run: cargo build --release --verbose
+
+#      - name: Run lint
+#        run: cargo clippy --verbose
+
+#      - name: Run tests
+#        run: cargo test --verbose
