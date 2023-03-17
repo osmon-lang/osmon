@@ -1,0 +1,9 @@
+import "ast.osmx"
+import "idgen.osmx"
+import "std/libc.osmx"
+pub func main() i32 {
+	printf("%i\n",next_id());
+	printf("%i\n",next_id());
+	printf("%i\n",next_id());
+	return 0;
+}
