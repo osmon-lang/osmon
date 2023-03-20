@@ -53,11 +53,11 @@ impl Const {
                         id: *id,
                         pos: Position::new(intern(""), 0, 0),
                         name: *name,
-                        expr: box Expr {
+                        expr: Box::new(Expr {
                             id: NodeId(0),
                             pos: Position::new(intern(""), 0, 0),
                             kind: constant.borrow().to_kind(),
-                        },
+                        }),
                     })
                 }
                 ExprKind::Struct(Path::new(*name), args)

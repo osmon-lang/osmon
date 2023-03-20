@@ -301,12 +301,12 @@ pub struct TypeFunc {
 impl Type {
     pub fn make_ptr(&self) -> Type {
         match self {
-            Type::Basic(b) => Type::create_ptr(b.id, b.pos, box self.clone()),
-            Type::Ptr(p) => Type::create_ptr(p.id, p.pos, box self.clone()),
-            Type::Struct(s) => Type::create_ptr(s.id, s.pos, box self.clone()),
-            Type::Func(f) => Type::create_ptr(f.id, f.pos, box self.clone()),
-            Type::Array(a) => Type::create_ptr(a.id, a.pos, box self.clone()),
-            Type::Vector(v) => Type::create_ptr(v.id, v.pos, box self.clone()),
+            Type::Basic(b) => Type::create_ptr(b.id, b.pos, Box::new(self.clone())),
+            Type::Ptr(p) => Type::create_ptr(p.id, p.pos, Box::new(self.clone())),
+            Type::Struct(s) => Type::create_ptr(s.id, s.pos, Box::new(self.clone())),
+            Type::Func(f) => Type::create_ptr(f.id, f.pos, Box::new(self.clone())),
+            Type::Array(a) => Type::create_ptr(a.id, a.pos, Box::new(self.clone())),
+            Type::Vector(v) => Type::create_ptr(v.id, v.pos, Box::new(self.clone())),
             _ => unimplemented!(),
         }
     }
@@ -593,14 +593,14 @@ impl Function {
                 }
                 StmtKind::Expr(expr) => {
                     if expr.id == id {
-                        *expr = box to;
+                        *expr = Box::new(to);
                         return true;
                     }
                     return false;
                 }
                 StmtKind::If(e, then, other) => {
                     if e.id == id {
-                        *e = box to;
+                        *e = Box::new(to);
                         return true;
                     }
                     if replace_stmt(then, id, to.clone()) {
@@ -618,7 +618,7 @@ impl Function {
                 }
                 StmtKind::While(expr, then) => {
                     if expr.id == id {
-                        *expr = box to;
+                        *expr = Box::new(to);
                         return true;
                     }
                     if replace_stmt(then, id, to.clone()) {
@@ -632,7 +632,7 @@ impl Function {
                     if expr.is_some() {
                         let expr = expr.as_mut().unwrap();
                         if expr.id == id {
-                            *expr = box to;
+                            *expr = Box::new(to);
                             return true;
                         }
                     }

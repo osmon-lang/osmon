@@ -3,7 +3,7 @@ use crate::syntax::lexer::token::IntBase;
 use fmt::Display;
 use std::fmt;
 
-use std::intrinsics::write_bytes;
+// use std::intrinsics::write_bytes;
 
 impl Display for Expr {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

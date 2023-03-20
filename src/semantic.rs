@@ -423,7 +423,7 @@ impl<'a> SemCheck<'a> {
                 Elem::Func(f1) => {
                     let mut new_params = vec![];
                     for (name, param) in f1.params.iter() {
-                        new_params.push((*name, box self.infer_type(param)));
+                        new_params.push((*name, Box::new(self.infer_type(param))));
                     }
                     let ret = self.infer_type(&f1.ret);
                     let this = if let Some((_name, ty)) = &f1.this {
@@ -437,10 +437,10 @@ impl<'a> SemCheck<'a> {
                         unreachable!();
                     };
 
-                    f.ret = box ret;
+                    f.ret = Box::new(ret);
 
                     if let Some((_, ty)) = &mut f.this {
-                        *ty = box this.unwrap();
+                        *ty = Box::new(this.unwrap());
                     }
                     f.params = new_params;
                 }
@@ -475,7 +475,7 @@ impl<'a> SemCheck<'a> {
         match ty {
             Type::Vector(v) => {
                 let mut v = v.clone();
-                v.subtype = box self.infer_type(&v.subtype);
+                v.subtype = Box::new(self.infer_type(&v.subtype));
 
                 return Type::Vector(v);
             }

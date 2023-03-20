@@ -6,13 +6,10 @@ use crate::{
     },
 };
 
-use crate::{
-    ast::*,
-    syntax::interner::{str, Name},
-    Context,
-};
-use std::intrinsics::transmute;
+use crate::{ast::*, syntax::interner::Name, Context};
+// use std::intrinsics::transmute;
 use wrc::WRC as Rc;
+
 pub fn rc<T>(v: T) -> Rc<RefCell<T>> {
     Rc::new(RefCell::new(v))
 }
@@ -95,11 +92,11 @@ impl Const {
                         id: *id,
                         pos: Position::new(intern(""), 0, 0),
                         name: *name,
-                        expr: box Expr {
+                        expr: Box::new(Expr {
                             id: NodeId(0),
                             pos: Position::new(intern(""), 0, 0),
                             kind: constant.borrow().to_kind(),
-                        },
+                        }),
                     })
                 }
                 ExprKind::Struct(Path::new(*name), args)
@@ -107,11 +104,11 @@ impl Const {
             Const::Array(values, pos_and_id, ty) => {
                 let mut exprs = vec![];
                 for (i, val) in values.borrow().iter().enumerate() {
-                    exprs.push(box Expr {
+                    exprs.push(Box::new(Expr {
                         id: pos_and_id[i].0,
                         pos: pos_and_id[i].1,
                         kind: val.borrow().to_kind(),
-                    });
+                    }));
                 }
 
                 ExprKind::Array(ty.clone(), exprs)

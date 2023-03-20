@@ -127,7 +127,7 @@ impl Lexer {
         }
 
         let lookup = self.keywords.get(&value[..]).cloned();
-        let mut ttype;
+        let ttype;
 
         if let Some(tok_type) = lookup {
             ttype = tok_type;

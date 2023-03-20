@@ -2,10 +2,9 @@
 #![warn(rust_2018_idioms)]
 #![allow(clippy::redundant_closure)]
 #![allow(clippy::vec_box)]
-// #![feature(const_fn)]
-#![feature(box_syntax)]
 #![allow(dead_code)]
 #![allow(unused_variables)]
+#![allow(temporary_cstring_as_ptr)]
 #[macro_use]
 pub mod macros;
 pub mod ast2cpp;
@@ -143,7 +142,7 @@ impl Context {
 
     pub fn get_func_mut(&mut self, id: NodeId) -> Option<&mut Function> {
         for elem in self.file.elems.iter_mut() {
-            if let syntax::ast::Elem::Func(f) = elem {
+            if let ast::Elem::Func(f) = elem {
                 return Some(f);
             }
         }

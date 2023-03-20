@@ -44,11 +44,11 @@ impl<'a> Parser<'a> {
             TokenKind::ConstExpr => {
                 let pos = self.advance_token()?.position;
                 let stmt = self.parse_statement()?;
-                Ok(box Stmt {
+                Ok(Box::new(Stmt {
                     id: self.generate_id(),
                     pos,
                     kind: StmtKind::CompTime(stmt),
-                })
+                }))
             }
             TokenKind::Let | TokenKind::Var => self.parse_var(),
             TokenKind::LBrace => self.parse_block(),
@@ -1105,7 +1105,7 @@ impl<'a> Parser<'a> {
             return Ok(Type::Vector(TypeVector {
                 id: self.generate_id(),
                 pos,
-                subtype: box subty,
+                subtype: Box::new(subty),
                 size,
             }));
         }
@@ -1162,7 +1162,7 @@ impl<'a> Parser<'a> {
                 return Ok(Type::create_array(
                     self.generate_id(),
                     pos,
-                    box ty.clone(),
+                    Box::new(ty.clone()),
                     None,
                 ));
             } else {
@@ -1176,7 +1176,7 @@ impl<'a> Parser<'a> {
                 return Ok(Type::create_array(
                     self.generate_id(),
                     pos,
-                    box ty.clone(),
+                    Box::new(ty.clone()),
                     Some(len),
                 ));
             }
@@ -1307,11 +1307,11 @@ impl<'a> Parser<'a> {
                 let pos = self.advance_token()?.position;
                 let expr = self.parse_expression()?;
 
-                Ok(box Expr {
+                Ok(Box::new(Expr {
                     id: self.generate_id(),
                     pos,
                     kind: ExprKind::CompTime(expr),
-                })
+                }))
             }
             TokenKind::Fun => self.parse_func_get(),
             TokenKind::BitAnd => self.parse_addrof(),

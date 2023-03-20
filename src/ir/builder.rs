@@ -38,16 +38,16 @@ impl<'a> FunctionBuilder<'a> {
             .make_inst(InstructionData::AllocaSize(Opcode::Alloca, size));
         self.func
             .value_types
-            .insert(value, IrType::Ptr(box IrType::UInt(8)));
+            .insert(value, IrType::Ptr(Box::new(IrType::UInt(8))));
         value
     }
     pub fn stack_alloc_ty(&mut self, ty: IrType) -> Value {
         let value = self
             .cfg()
-            .make_inst(InstructionData::Alloca(Opcode::Alloca, box ty));
+            .make_inst(InstructionData::Alloca(Opcode::Alloca, Box::new(ty)));
         self.func
             .value_types
-            .insert(value, IrType::Ptr(box IrType::UInt(8)));
+            .insert(value, IrType::Ptr(Box::new(IrType::UInt(8))));
         value
     }
 

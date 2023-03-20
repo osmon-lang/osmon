@@ -1,5 +1,5 @@
 use crate::Context as CContext;
-use gccjit_rs::{
+use gccjit::{
     block::{BinaryOp, Block, ComparisonOp, UnaryOp},
     ctx::{Context, GlobalKind, OutputKind},
     field::Field,
@@ -26,7 +26,7 @@ use std::{
 fn gccloc_from_loc(
     ctx: &Context,
     loc: &crate::syntax::position::Position,
-) -> gccjit_rs::location::Location {
+) -> gccjit::location::Location {
     ctx.new_location(str(loc.file).to_string(), loc.line as _, loc.column as _)
 }
 
@@ -474,9 +474,9 @@ impl<'a> Codegen<'a> {
 
         ctx.set_name(name);
         ctx.set_dump_gimple(context.gimple);
-        use gccjit_rs::sys::*;
+        use gccjit::sys::*;
         unsafe {
-            let ptr = gccjit_rs::ctx::context_get_ptr(&ctx);
+            let ptr = gccjit::ctx::context_get_ptr(&ctx);
             gcc_jit_context_set_bool_allow_unreachable_blocks(ptr, true as _);
         }
         Codegen {
@@ -923,7 +923,7 @@ impl<'a> Codegen<'a> {
                             expr.id,
                             expr.pos,
                             crate::syntax::interner::intern($name),
-                        );
+                        )
                     };
                 }
 
@@ -1343,7 +1343,7 @@ impl<'a> Codegen<'a> {
                     );
                 }
 
-                if t1.is_ptr() && crate::semantic::ty_is_any_int(&t2) {
+                if t1.is_ptr() && ty_is_any_int(&t2) {
                     let array = self.gen_expr(e1);
                     let index = self.gen_expr(e2);
                     self.ctx

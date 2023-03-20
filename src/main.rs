@@ -1,12 +1,10 @@
-#![feature(box_syntax)]
-
 extern crate havo;
 extern crate structopt;
 
 use havo::{
     err::MsgWithPos,
     gccjit::Codegen,
-    optimize::const_eval,
+    // optimize::const_eval,
     semantic::*,
     syntax::{ast::*, lexer::reader::Reader, parser::*},
     Context,
@@ -152,14 +150,16 @@ fn main() -> Result<(), MsgWithPos> {
     ctx.file.elems.extend(
         opts.libraries_link
             .iter()
-            .map(|name| havo::ast::Elem::Link(havo::intern(name))),
+            .map(|name| Elem::Link(havo::intern(name))),
     );
     let mut semantic = SemCheck::new(&mut ctx);
 
     semantic.run();
-    use havo::eval::EvalCtx;
-    /*let mut eval = EvalCtx::new(&mut ctx);
-    eval.run();*/
+
+    // use havo::eval::EvalCtx;
+    // let mut eval = EvalCtx::new(&mut ctx);
+    // eval.run();
+
     if opts.print_ast {
         for elem in ctx.file.elems.iter() {
             println!("{}", elem);

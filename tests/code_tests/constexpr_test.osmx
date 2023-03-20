@@ -1,6 +1,7 @@
 // Compiler:
 //  	stdout:42
 
+
 constexpr X = 40
 constexpr Y = 2
 extern func printf(x: *char,...) void;
