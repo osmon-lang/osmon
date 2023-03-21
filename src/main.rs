@@ -29,10 +29,6 @@ impl Backend {
     pub const fn cpp() -> &'static str {
         "cpp"
     }
-
-    pub const fn cranelift() -> &'static str {
-        "cranelift"
-    }
 }
 
 use std::str::FromStr;

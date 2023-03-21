@@ -19,9 +19,6 @@ pub struct VectorIterator {
 }
 
 pub func vector_setup(vector: *Vector,capacity: usize,element_size: usize) i32 {
-
-	
-
 	vector.size = 0 as usize;
 	if VECTOR_MIN_CAP > capacity {
 		vector.capacity = VECTOR_MIN_CAP;
