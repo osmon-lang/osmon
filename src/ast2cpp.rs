@@ -11,15 +11,11 @@ impl Translator {
     pub fn new(ctx: Context) -> Translator {
         Translator {
             ctx,
-            code: format!(
-                "
-#include <inttypes.h>
+            code:
+                "#include <inttypes.h>
 #include <stddef.h>
 
-
-
-"
-            ),
+".to_string(),
         }
     }
 
@@ -44,7 +40,7 @@ impl Translator {
                     "f64" => "double",
                     s => s,
                 };
-                self.code.push_str(&s);
+                self.code.push_str(s);
             }
             Type::Ptr(ptr) => {
                 self.type_to_c(&ptr.subtype);
@@ -56,7 +52,7 @@ impl Translator {
             }
             Type::Func(func) => {
                 self.type_to_c(&func.ret);
-                self.code.push_str(&format!(" (*)("));
+                self.code.push_str(" (*)(");
                 for (i, ty) in func.params.iter().enumerate() {
                     self.type_to_c(ty);
                     if i != func.params.len() - 1 {
@@ -79,7 +75,7 @@ impl Translator {
             StmtKind::Block(stmts) => {
                 self.code.push_str("{\n");
                 for stmt in stmts.iter() {
-                    self.code.push_str("\t");
+                    self.code.push('\t');
                     self.gen_stmt(stmt);
                 }
                 self.code.push_str("\n}");
@@ -116,7 +112,7 @@ impl Translator {
                 self.gen_expr(cond);
                 self.code.push_str(")\n");
                 self.gen_stmt(block);
-                self.code.push_str("\n");
+                self.code.push('\n');
             }
             StmtKind::Var(name, reassignable, ty, expr) => {
                 if !*reassignable {
@@ -138,7 +134,7 @@ impl Translator {
             StmtKind::Loop(block) => {
                 self.code.push_str("while (true) \n");
                 self.gen_stmt(block);
-                self.code.push_str("\n");
+                self.code.push('\n');
             }
             _ => unimplemented!(),
         }
@@ -187,7 +183,7 @@ impl Translator {
                 for (i, arg) in args.iter().enumerate() {
                     let arg: &StructArg = arg;
                     self.code
-                        .push_str(&format!(".{} = ", str(arg.name).to_string()));
+                        .push_str(&format!(".{} = ", str(arg.name)));
                     self.gen_expr(&arg.expr);
                     if i != args.len() - 1 {
                         self.code.push_str(",\n");
@@ -213,7 +209,7 @@ impl Translator {
             ExprKind::Call(path, obj, args) => {
                 let name = path.name();
                 self.code.push_str(&str(name));
-                self.code.push_str("(");
+                self.code.push('(');
                 if obj.is_some() {
                     let expr_ = obj.as_ref().unwrap();
                     let ty = self.ctx.types.get(&expr_.id).unwrap().clone();
@@ -221,7 +217,7 @@ impl Translator {
                         self.code.push('&');
                     }
                     self.gen_expr(expr_);
-                    if args.len() != 0 {
+                    if !args.is_empty() {
                         self.code.push(',');
                     }
                 }
@@ -236,7 +232,7 @@ impl Translator {
             ExprKind::SizeOf(ty) => {
                 self.code.push_str("sizeof(");
                 self.type_to_c(ty);
-                self.code.push_str(")");
+                self.code.push(')');
             }
             ExprKind::ArrayIdx(array, index) => {
                 self.gen_expr(array);
@@ -254,10 +250,10 @@ impl Translator {
             match elem {
                 Elem::Struct(struct_) => self
                     .code
-                    .push_str(&format!("struct {};\n", str(struct_.name).to_string())),
+                    .push_str(&format!("struct {};\n", str(struct_.name))),
                 Elem::ConstExpr { name, expr, .. } => {
                     self.code
-                        .push_str(&format!("#define {} ", str(*name).to_string()));
+                        .push_str(&format!("#define {} ", str(*name)));
                     self.gen_expr(expr);
                     self.code.push('\n');
                 }
@@ -273,13 +269,13 @@ impl Translator {
                 }
                 self.type_to_c(&f.ret);
                 self.code
-                    .push_str(&format!(" {} (", str(f.name).to_string()));
+                    .push_str(&format!(" {} (", str(f.name)));
                 if f.this.is_some() {
                     let (name, ty) = f.this.as_ref().unwrap();
 
                     self.type_to_c(ty);
                     self.code.push_str(&format!(" {}", str(*name).to_owned()));
-                    if f.params.len() != 0 {
+                    if !f.params.is_empty() {
                         self.code.push(',');
                     }
                 }
@@ -287,10 +283,8 @@ impl Translator {
                     self.type_to_c(ty);
                     if i != f.params.len() - 1 {
                         self.code.push(',');
-                    } else {
-                        if f.variadic {
-                            self.code.push_str(",...");
-                        }
+                    } else if f.variadic {
+                        self.code.push_str(",...");
                     }
                 }
                 self.code.push_str(");\n");
@@ -300,31 +294,28 @@ impl Translator {
             }
         }
         for elem in elems.iter() {
-            match elem {
-                Elem::Struct(s) => {
-                    self.code
-                        .push_str(&format!("struct {} {{\n", str(s.name).to_string()));
-                    let s: &Struct = s;
-                    for field in s.fields.iter() {
-                        let f: &StructField = field;
+            if let Elem::Struct(s) = elem {
+                self.code
+                    .push_str(&format!("struct {} {{\n", str(s.name)));
+                let s: &Struct = s;
+                for field in s.fields.iter() {
+                    let f: &StructField = field;
 
-                        self.type_to_c(&f.data_type);
-                        self.code
-                            .push_str(&format!(" {};\n", str(f.name).to_string()));
-                    }
-                    self.code.push_str("};\n");
+                    self.type_to_c(&f.data_type);
+                    self.code
+                        .push_str(&format!(" {};\n", str(f.name)));
                 }
-                _ => {}
+                self.code.push_str("};\n");
             }
         }
         for elem in elems.iter() {
             match elem {
                 Elem::Const(c) => {
                     let c: &Const = c;
-                    self.code.push_str(&format!("const "));
+                    self.code.push_str("const ");
                     self.type_to_c(&c.typ);
                     self.code
-                        .push_str(&format!(" {} = ", str(c.name).to_string()));
+                        .push_str(&format!(" {} = ", str(c.name)));
                     self.gen_expr(&c.expr);
                     self.code.push_str(";\n");
                 }
@@ -333,25 +324,23 @@ impl Translator {
                         let f: &Function = f;
                         self.type_to_c(&f.ret);
                         self.code
-                            .push_str(&format!(" {} (", str(f.name).to_string()));
+                            .push_str(&format!(" {} (", str(f.name)));
                         if f.this.is_some() {
                             let (name, ty) = f.this.as_ref().unwrap();
 
                             self.type_to_c(ty);
                             self.code.push_str(&format!(" {}", str(*name).to_owned()));
-                            if f.params.len() != 0 {
+                            if !f.params.is_empty() {
                                 self.code.push(',');
                             }
                         }
                         for (i, (name, ty)) in f.params.iter().enumerate() {
                             self.type_to_c(ty);
-                            self.code.push_str(&format!(" {} ", str(*name).to_string()));
+                            self.code.push_str(&format!(" {} ", str(*name)));
                             if i != f.params.len() - 1 {
                                 self.code.push(',');
-                            } else {
-                                if f.variadic {
-                                    self.code.push_str("...");
-                                }
+                            } else if f.variadic {
+                                self.code.push_str("...");
                             }
                         }
 
@@ -393,7 +382,7 @@ impl Translator {
         let elems = self.ctx.file.elems.clone();
         self.gen_toplevel(&elems);
 
-        let file = format!("output.cc");
+        let file = "output.cc".to_string();
 
         use std::io::Write;
         let mut f = std::fs::OpenOptions::new()

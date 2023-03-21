@@ -43,7 +43,6 @@ impl FromStr for Backend {
         let s: &str = &s.to_lowercase();
         match s {
             "gccjit" => Ok(Backend::GccJIT),
-            "cranelift" => Ok(Backend::CraneLift),
             "cpp" | "c++" => Ok(Backend::CPP),
             _ => Err("expected gccjit,cpp or cranelift backend"),
         }
