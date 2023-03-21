@@ -1,6 +1,5 @@
 import "libc.osmx"
 
-
 pub func print(c: char) void {
 	printf("%c",c);
 	return;
@@ -10,8 +9,6 @@ pub func print(c: *char) void {
 	printf("%s",c);
 	return;
 }
-
-
 
 pub func print(c: *char,size: i32) void {
 	printf("%.*s",size,c);

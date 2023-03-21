@@ -118,7 +118,7 @@ pub enum Msg {
 impl Msg {
     pub fn message(&self) -> String {
         match *self {
-            Unimplemented => format!("feature not implemented yet."),
+            Unimplemented => "feature not implemented yet.".to_string(),
             UnknownClass(ref name) => format!("class `{}` does not exist.", name),
             UnknownType(ref name) => format!("type `{}` does not exist.", name),
             UnknownIdentifier(ref name) => format!("unknown identifier `{}`.", name),
@@ -179,7 +179,7 @@ impl Msg {
                 "`return` expects value of type `{}` but got `{}`.",
                 def, expr
             ),
-            LvalueExpected => format!("lvalue expected for assignment"),
+            LvalueExpected => "lvalue expected for assignment".to_string(),
             AssignType(ref name, ref def, ref expr) => format!(
                 "cannot assign `{}` to variable `{}` of type `{}`.",
                 expr, name, def
@@ -258,7 +258,7 @@ impl Msg {
             UnclosedChar => "unclosed char.".into(),
             IoError => "error reading from file.".into(),
             MissingFctBody => "missing function body.".into(),
-            FctCallExpected => format!("function call expected"),
+            FctCallExpected => "function call expected".to_string(),
             ThisOrSuperExpected(ref val) => format!("`self` or `super` expected but got {}.", val),
             NoSuperDelegationWithPrimaryCtor(ref name) => format!(
                 "no `super` delegation allowed for ctor in class {}, because class has \
