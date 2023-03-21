@@ -19,8 +19,6 @@ pub enum Backend {
     GccJIT,
     #[structopt(help = "C++ backend,still W.I.P")]
     CPP,
-    #[structopt(help = "Cranelift backend (UNIMPLEMENTED!)")]
-    CraneLift,
 }
 
 impl Backend {
@@ -178,9 +176,6 @@ fn main() -> Result<(), MsgWithPos> {
                 cgen.ctx.add_command_line_option(opt);
             }
             cgen.compile();
-        }
-        Backend::CraneLift => {
-            eprintln!("Cranelift backend still unimplemented");
         }
     }
 
