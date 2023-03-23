@@ -34,14 +34,17 @@ pub enum Const {
 
 impl Const {
     fn is_void(&self) -> bool {
-        matches!(self, Const::Void)
+        match self {
+            Const::Void => true,
+            _ => false,
+        }
     }
 
     /// Translate Const value into Expression
     fn to_kind(&self) -> ExprKind {
         match self {
-            Const::Imm(imm, suffix, base) => ExprKind::Int(*imm, *base, *suffix),
-            Const::Float(f, suffix) => ExprKind::Float(*f, *suffix),
+            Const::Imm(imm, suffix, base) => ExprKind::Int(*imm, base.clone(), suffix.clone()),
+            Const::Float(f, suffix) => ExprKind::Float(*f, suffix.clone()),
             Const::Bool(b) => ExprKind::Bool(*b),
             Const::Struct(name, fields) => {
                 let mut args = vec![];
@@ -77,8 +80,8 @@ impl PartialEq for Const {
             (Const::Float(f, _), Const::Float(f2, _)) => f == f2,
             (Const::Bool(b), Const::Bool(b2)) => b == b2,
             (Const::Struct(s1name, fields1), Const::Struct(s2name, fields2)) => {
-                if fields1.is_empty() && fields2.is_empty() {
-                    s1name == s2name
+                if fields1.len() == 0 && fields2.len() == 0 {
+                    return s1name == s2name;
                 } else {
                     let mut fields_ok = false;
                     for (f1, f2) in fields1.iter().zip(fields2.iter()) {
@@ -94,7 +97,10 @@ impl PartialEq for Const {
 
 impl Const {
     fn is_none(&self) -> bool {
-        matches!(self, Const::None)
+        match self {
+            Const::None => true,
+            _ => false,
+        }
     }
 }
 /// return size of type
@@ -133,13 +139,17 @@ fn ty_size(ty: &Type) -> Option<usize> {
         }
         Type::Array(array) => {
             if array.len.is_some() {
-                ty_size(&array.subtype).map(|size| size * array.len.unwrap())
+                if let Some(size) = ty_size(&array.subtype) {
+                    return Some(size * array.len.unwrap());
+                } else {
+                    return None;
+                }
             } else {
-                Some(std::mem::size_of::<*const u8>())
+                return Some(std::mem::size_of::<*const u8>());
             }
         }
-        Type::Func(_) => Some(std::mem::size_of::<*const u8>()),
-        Type::Void(_) => Some(0),
+        Type::Func(_) => return Some(std::mem::size_of::<*const u8>()),
+        Type::Void(_) => return Some(0),
     }
 }
 
@@ -202,8 +212,8 @@ impl<'a> ConstEval<'a> {
     /// If values of lhs and rhs known at compile time evaluates binary
     /// operation
     fn eval_binop(&mut self, op: &str, lhs: &Expr, rhs: &Expr) -> Rc<RefCell<Const>> {
-        let c1 = self.eval(lhs);
-        let c2 = self.eval(rhs);
+        let c1 = self.eval(&lhs);
+        let c2 = self.eval(&rhs);
 
         if c1.borrow().is_none() || c2.borrow().is_none() {
             return Rc::new(RefCell::new(Const::None));
@@ -341,7 +351,7 @@ impl<'a> ConstEval<'a> {
                             for (name, val_, id) in fields.iter_mut() {
                                 if name == field {
                                     *id = from.id;
-                                    *val_ = val;
+                                    *val_ = val.clone();
                                     break;
                                 }
                             }
@@ -477,13 +487,13 @@ impl<'a> ConstEval<'a> {
                     }
                 }
 
-                rc(Const::None)
+                return rc(Const::None);
             }
 
             ExprKind::Ident(name) => self.try_get_var(name),
             ExprKind::Assign(to, from) => {
                 self.try_assign(to, from);
-                self.eval(from)
+                return self.eval(from);
             }
             ExprKind::ArrayIdx(expr_, id) => {
                 let id = self.eval(id);
@@ -502,7 +512,7 @@ impl<'a> ConstEval<'a> {
                 if let Const::Array(array) = array {
                     return array.borrow()[idx].clone();
                 } else {
-                    rc(Const::None)
+                    return rc(Const::None);
                 }
             }
 
@@ -521,7 +531,7 @@ impl<'a> ConstEval<'a> {
                             continue;
                         }
                         let mut params_match = false;
-                        if args.is_empty() && fun.params.is_empty() {
+                        if args.len() == 0 && fun.params.len() == 0 {
                             params_match = true;
                         } else {
                             for (i, arg) in args.iter().enumerate() {
@@ -554,7 +564,7 @@ impl<'a> ConstEval<'a> {
                             continue;
                         }
                         let mut params_match = false;
-                        if args.is_empty() && fun.params.is_empty() {
+                        if args.len() == 0 && fun.params.len() == 0 {
                             params_match = true;
                         } else {
                             for (i, arg) in args.iter().enumerate() {
@@ -604,15 +614,17 @@ impl<'a> ConstEval<'a> {
                         let val = self.eval(arg);
                         if val.borrow().is_none() {
                             return rc(Const::None);
-                        } else if let Elem::Func(f) = &mut self.ctx.file.elems[self.id] {
-                            f.replace_expr_to(
-                                arg.id,
-                                Expr {
-                                    id: arg.id,
-                                    pos: expr.pos,
-                                    kind: val.borrow().to_kind(),
-                                },
-                            );
+                        } else {
+                            if let Elem::Func(f) = &mut self.ctx.file.elems[self.id] {
+                                f.replace_expr_to(
+                                    arg.id,
+                                    Expr {
+                                        id: arg.id,
+                                        pos: expr.pos,
+                                        kind: val.borrow().to_kind(),
+                                    },
+                                );
+                            }
                         }
                     }
                 }
@@ -621,9 +633,9 @@ impl<'a> ConstEval<'a> {
             }
             ExprKind::SizeOf(ty) => {
                 if let Some(size) = ty_size(ty) {
-                    rc(Const::Imm(size as i64, IntSuffix::Int, IntBase::Dec))
+                    return rc(Const::Imm(size as i64, IntSuffix::Int, IntBase::Dec));
                 } else {
-                    rc(Const::None)
+                    return rc(Const::None);
                 }
             }
 
@@ -635,7 +647,7 @@ impl<'a> ConstEval<'a> {
         &mut self,
         params: &[Name],
         body: &Stmt,
-        args: &[Box<Expr>],
+        args: &Vec<Box<Expr>>,
     ) -> Rc<RefCell<Const>> {
         let old_vars = self.known_vars.clone();
         //self.known_vars.clear();
@@ -669,12 +681,12 @@ impl<'a> ConstEval<'a> {
         if val.is_some() {
             let val: &Const = &val.as_ref().unwrap().borrow();
             if let Const::Ret(val) = val {
-                val.clone()
+                return val.clone();
             } else {
-                rc(val.clone())
+                return rc(val.clone());
             }
         } else {
-            rc(Const::None)
+            return rc(Const::None);
         }
     }
     /// Evaluate constant
@@ -692,21 +704,21 @@ impl<'a> ConstEval<'a> {
                         }
                     }
                 }
-                last
+                return last;
             }
             StmtKind::Expr(expr) => {
-                Some(self.eval(expr))
+                return Some(self.eval(expr));
             }
             StmtKind::Return(expr) => {
                 if expr.is_some() {
                     let val = self.eval(expr.as_ref().unwrap());
                     if val.borrow().is_none() {
-                        None
+                        return None;
                     } else {
-                        Some(rc(Const::Ret(val)))
+                        return Some(rc(Const::Ret(val)));
                     }
                 } else {
-                    Some(rc(Const::Ret(Rc::new(RefCell::new(Const::Void)))))
+                    return Some(rc(Const::Ret(Rc::new(RefCell::new(Const::Void)))));
                 }
             }
             StmtKind::Var(name, _, ty, expr) => {
@@ -721,7 +733,7 @@ impl<'a> ConstEval<'a> {
                     self.known_vars.insert(*name, val);
                 }
 
-                Some(rc(Const::Void))
+                return Some(rc(Const::Void));
             }
             StmtKind::If(cond, then_body, else_body) => {
                 let val = self.eval(cond);
@@ -733,14 +745,14 @@ impl<'a> ConstEval<'a> {
                 if let Const::Bool(true) = val {
                     return self.eval_stmt(then_body);
                 } else if let Const::Bool(false) = val {
-                    return if else_body.is_some() {
+                    if else_body.is_some() {
                         let else_body = else_body.as_ref().unwrap();
-                        self.eval_stmt(else_body)
+                        return self.eval_stmt(else_body);
                     } else {
-                        Some(Rc::new(RefCell::new(Const::Void)))
+                        return Some(Rc::new(RefCell::new(Const::Void)));
                     }
                 }
-                Some(Rc::new(RefCell::new(Const::Void)))
+                return Some(Rc::new(RefCell::new(Const::Void)));
             }
 
             StmtKind::While(cond, body) => {
@@ -755,7 +767,7 @@ impl<'a> ConstEval<'a> {
                         return None;
                     }
                 }
-                Some(Rc::new(RefCell::new(Const::Void)))
+                return Some(Rc::new(RefCell::new(Const::Void)));
             }
 
             _ => panic!("Unsupported statement in constant function"),
@@ -877,18 +889,18 @@ impl<'a> ConstEval<'a> {
         for elem in self.ctx.file.elems.clone().iter() {
             if let Elem::Func(func) = elem {
                 if func.constant {
-                    if let std::collections::hash_map::Entry::Vacant(e) = self.const_functions.entry(func.name) {
-                        e.insert(vec![func.clone()]);
-                    } else {
+                    if self.const_functions.contains_key(&func.name) {
                         let funcs = self.const_functions.get_mut(&func.name).unwrap();
                         funcs.push(func.clone());
+                    } else {
+                        self.const_functions.insert(func.name, vec![func.clone()]);
                     }
                 } else if !func.internal && !func.external {
-                    if let std::collections::hash_map::Entry::Vacant(e) = self.functions.entry(func.name) {
-                        e.insert(vec![func.clone()]);
-                    } else {
+                    if self.functions.contains_key(&func.name) {
                         let funcs = self.functions.get_mut(&func.name).unwrap();
                         funcs.push(func.clone());
+                    } else {
+                        self.functions.insert(func.name, vec![func.clone()]);
                     }
                 }
             }

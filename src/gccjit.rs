@@ -364,13 +364,15 @@ impl<'a> Codegen<'a> {
             for (index, param) in params.iter().enumerate() {
                 if index < function.f.params.len() {
                     params_okay = param == &*function.f.params[index].1;
-                } else if function.f.variadic && params_okay {
-                    not_found = false;
-                    break;
                 } else {
-                    params_okay = false;
-                    not_found = true;
-                    break;
+                    if function.f.variadic && params_okay {
+                        not_found = false;
+                        break;
+                    } else {
+                        params_okay = false;
+                        not_found = true;
+                        break;
+                    }
                 }
 
                 if !params_okay {
@@ -423,20 +425,22 @@ impl<'a> Codegen<'a> {
                 continue;
             }
 
-            if function.params.is_empty() && params.is_empty() && this.is_none() {
+            if function.params.len() == 0 && params.len() == 0 && this.is_none() {
                 return Some((function.clone(), vec![]));
             }
 
             for (index, param) in params.iter().enumerate() {
                 if index < function.params.len() {
                     params_okay = param == &*function.params[index].1;
-                } else if function.variadic && params_okay {
-                    not_found = false;
-                    break;
                 } else {
-                    params_okay = false;
-                    not_found = true;
-                    break;
+                    if function.variadic && params_okay {
+                        not_found = false;
+                        break;
+                    } else {
+                        params_okay = false;
+                        not_found = true;
+                        break;
+                    }
                 }
 
                 if !params_okay {
@@ -511,12 +515,12 @@ impl<'a> Codegen<'a> {
                 }
             }
             Type::Struct(basic) => {
-                return if let Some(s) = self.structures.get(&basic.name) {
-                    Some(s.clone())
+                if let Some(s) = self.structures.get(&basic.name) {
+                    return Some(s.clone());
                 } else if let Some(ty) = self.aliases.get(&basic.name) {
-                    self.find_struct(ty)
+                    return self.find_struct(ty);
                 } else {
-                    None
+                    return None;
                 }
             }
             _ => None,
@@ -567,7 +571,7 @@ impl<'a> Codegen<'a> {
                 ))
             }
             ExprKind::Field(object, name) => {
-                let ty: Type = self.get_id_type(object.id);
+                let ty: Type = self.get_id_type(object.id).clone();
 
                 if ty.is_ptr() {
                     let ptr = ty.to_ptr().unwrap();
@@ -723,7 +727,7 @@ impl<'a> Codegen<'a> {
                 let local = self.cur_func.unwrap().new_local(
                     Some(gccloc_from_loc(&self.ctx, &stmt.pos)),
                     cty,
-                    str(*name).to_string(),
+                    &str(*name).to_string(),
                 );
                 if init.is_some() {
                     let expr = init.as_ref().unwrap();
