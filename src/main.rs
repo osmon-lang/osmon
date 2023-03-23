@@ -111,7 +111,7 @@ fn main() -> Result<(), MsgWithPos> {
         root: opts
             .file
             .parent()
-            .unwrap_or(&std::path::Path::new(""))
+            .unwrap_or(std::path::Path::new(""))
             .to_str()
             .unwrap()
             .to_owned(),
@@ -126,7 +126,7 @@ fn main() -> Result<(), MsgWithPos> {
 
     let err = parser.parse();
     if err.is_err() {
-        println!("{}", err.clone().err().unwrap());
+        println!("{}", err.err().unwrap());
         std::process::exit(-1);
     }
 

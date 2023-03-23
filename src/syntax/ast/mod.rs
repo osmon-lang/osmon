@@ -554,18 +554,18 @@ impl Function {
             match &mut s.kind {
                 StmtKind::CompTime(s) => replace_stmt(s, id, to),
                 StmtKind::CFor(var, cond, then, body) => {
-                    if replace_stmt(var, id, to.clone()) == true {
+                    if replace_stmt(var, id, to.clone()) {
                         return true;
                     }
                     if cond.id == id {
-                        cond.kind = to.kind.clone();
+                        cond.kind = to.kind;
                         return true;
                     }
                     if then.id == id {
-                        then.kind = to.kind.clone();
+                        then.kind = to.kind;
                         return true;
                     }
-                    if replace_stmt(body, id, to.clone()) == true {
+                    if replace_stmt(body, id, to) {
                         return true;
                     }
                     false

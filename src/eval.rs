@@ -49,8 +49,8 @@ impl PartialEq for Const {
             (Const::Float(f, _), Const::Float(f2, _)) => f == f2,
             (Const::Bool(b), Const::Bool(b2)) => b == b2,
             (Const::Struct(s1name, fields1), Const::Struct(s2name, fields2)) => {
-                if fields1.len() == 0 && fields2.len() == 0 {
-                    return s1name == s2name;
+                if fields1.is_empty() && fields2.is_empty() {
+                    s1name == s2name
                 } else {
                     let mut fields_ok = false;
                     for (f1, f2) in fields1.iter().zip(fields2.iter()) {
@@ -66,24 +66,18 @@ impl PartialEq for Const {
 
 impl Const {
     fn is_void(&self) -> bool {
-        match self {
-            Const::Void => true,
-            _ => false,
-        }
+        matches!(self, Const::Void)
     }
 
     fn is_none(&self) -> bool {
-        match self {
-            Const::None => true,
-            _ => false,
-        }
+        matches!(self, Const::None)
     }
 
     /// Translate Const value into Expression
     fn to_kind(&self) -> ExprKind {
         match self {
-            Const::Imm(imm, suffix, base) => ExprKind::Int(*imm, base.clone(), suffix.clone()),
-            Const::Float(f, suffix) => ExprKind::Float(*f, suffix.clone()),
+            Const::Imm(imm, suffix, base) => ExprKind::Int(*imm, *base, *suffix),
+            Const::Float(f, suffix) => ExprKind::Float(*f, *suffix),
             Const::Bool(b) => ExprKind::Bool(*b),
             Const::Struct(name, fields) => {
                 let mut args = vec![];
@@ -161,22 +155,20 @@ impl<'a> EvalCtx<'a> {
                 continue;
             }
 
-            if function.params.len() == 0 && params.len() == 0 && this.is_none() {
+            if function.params.is_empty() && params.is_empty() && this.is_none() {
                 return Some((function.clone(), vec![]));
             }
 
             for (index, param) in params.iter().enumerate() {
                 if index < function.params.len() {
                     params_okay = param == &*function.params[index].1;
+                } else if function.variadic && params_okay {
+                    not_found = false;
+                    break;
                 } else {
-                    if function.variadic && params_okay {
-                        not_found = false;
-                        break;
-                    } else {
-                        params_okay = false;
-                        not_found = true;
-                        break;
-                    }
+                    params_okay = false;
+                    not_found = true;
+                    break;
                 }
 
                 if !params_okay {
@@ -208,8 +200,8 @@ impl<'a> EvalCtx<'a> {
     /// If values of lhs and rhs known at compile time evaluates binary
     /// operation
     fn eval_binop(&mut self, op: &str, lhs: &Expr, rhs: &Expr, const_: bool) -> Rc<RefCell<Const>> {
-        let c1 = self.expr(&lhs, const_);
-        let c2 = self.expr(&rhs, const_);
+        let c1 = self.expr(lhs, const_);
+        let c2 = self.expr(rhs, const_);
 
         if c1.borrow().is_none() || c2.borrow().is_none() {
             return Rc::new(RefCell::new(Const::None));
@@ -359,7 +351,7 @@ impl<'a> EvalCtx<'a> {
                             for (name, val_, id) in fields.iter_mut() {
                                 if name == field {
                                     *id = from.id;
-                                    *val_ = val.clone();
+                                    *val_ = val;
                                     break;
                                 }
                             }
@@ -394,7 +386,7 @@ impl<'a> EvalCtx<'a> {
                     }
                     self.maybe_replace_expr(&val.borrow(), expr.id, expr.pos);
 
-                    return val;
+                    val
                 }
                 ExprKind::Array(ty, exprs) => {
                     let mut pos_and_id = vec![];
@@ -411,9 +403,7 @@ impl<'a> EvalCtx<'a> {
                         values.push(val);
                     }
 
-                    let val = rc(Const::Array(rc(values), pos_and_id, ty.clone()));
-
-                    return val;
+                    rc(Const::Array(rc(values), pos_and_id, ty.clone()))
                 }
                 ExprKind::ArrayIdx(array_e, idx_e) => {
                     let array = self.expr(array_e, const_);
@@ -449,7 +439,7 @@ impl<'a> EvalCtx<'a> {
 
                     self.try_assign(to, from_, const_);
 
-                    return from;
+                    from
                 }
                 ExprKind::Field(val, field) => {
                     let val = self.expr(val, const_);
@@ -465,7 +455,7 @@ impl<'a> EvalCtx<'a> {
                         }
                     }
 
-                    return rc(Const::None);
+                    rc(Const::None)
                 }
                 ExprKind::Ident(name) => self.try_get_var(name, const_),
                 ExprKind::Call(name, this, args) => {
@@ -483,7 +473,7 @@ impl<'a> EvalCtx<'a> {
                                 continue;
                             }
                             let mut params_match = false;
-                            if args.len() == 0 && fun.params.len() == 0 {
+                            if args.is_empty() && fun.params.is_empty() {
                                 params_match = true;
                             } else {
                                 for (i, arg) in args.iter().enumerate() {
@@ -497,7 +487,7 @@ impl<'a> EvalCtx<'a> {
                             }
                         }
 
-                        if func.is_none() {
+                        if let Some(..) = func {
                             panic!("Const function not found");
                         } else {
                             let func: Function = func.unwrap();
@@ -523,7 +513,7 @@ impl<'a> EvalCtx<'a> {
                                 continue;
                             }
                             let mut params_match = false;
-                            if args.len() == 0 && fun.params.len() == 0 {
+                            if args.is_empty() && fun.params.is_empty() {
                                 params_match = true;
                             } else {
                                 for (i, arg) in args.iter().enumerate() {
@@ -537,7 +527,7 @@ impl<'a> EvalCtx<'a> {
                             }
                         }
 
-                        if func.is_none() {
+                        if let Some(..) = func {
                             panic!("function not found");
                         } else {
                             let func: Function = func.unwrap();
@@ -552,9 +542,9 @@ impl<'a> EvalCtx<'a> {
                     } else {
                     }
 
-                    return rc(Const::None);
+                    rc(Const::None)
                 }
-                _ => return rc(Const::None),
+                _ => rc(Const::None),
             }
         } else {
             if let ExprKind::CompTime(expr_) = &expr.kind {
@@ -601,7 +591,7 @@ impl<'a> EvalCtx<'a> {
                             }
                         }
                     }
-                    return last;
+                    last
                 }
                 StmtKind::Expr(expr) => {
                     let val = self.expr(expr, const_);
@@ -609,7 +599,7 @@ impl<'a> EvalCtx<'a> {
                         return None;
                     }
                     self.maybe_replace_expr(&val.borrow(), expr.id, expr.pos);
-                    return Some(val);
+                    Some(val)
                 }
                 StmtKind::Return(expr) => {
                     if expr.is_some() {
@@ -620,12 +610,12 @@ impl<'a> EvalCtx<'a> {
                         }
                         self.maybe_replace_expr(&val.borrow(), expr.id, expr.pos);
                         if val.borrow().is_none() {
-                            return None;
+                            None
                         } else {
-                            return Some(val);
+                            Some(val)
                         }
                     } else {
-                        return Some(rc(Const::Ret(Rc::new(RefCell::new(Const::Void)))));
+                        Some(rc(Const::Ret(Rc::new(RefCell::new(Const::Void)))))
                     }
                 }
                 StmtKind::Var(name, _, ty, expr) => {
@@ -642,7 +632,7 @@ impl<'a> EvalCtx<'a> {
                         self.known_vars.insert(*name, val);
                     }
 
-                    return Some(rc(Const::Void));
+                    Some(rc(Const::Void))
                 }
                 StmtKind::If(cond, then_body, else_body) => {
                     let val = self.expr(cond, const_);
@@ -656,14 +646,14 @@ impl<'a> EvalCtx<'a> {
                     if let Const::Bool(true) = val {
                         return self.eval_stmt(then_body, const_);
                     } else if let Const::Bool(false) = val {
-                        if else_body.is_some() {
+                        return if else_body.is_some() {
                             let else_body = else_body.as_ref().unwrap();
-                            return self.eval_stmt(else_body, const_);
+                            self.eval_stmt(else_body, const_)
                         } else {
-                            return Some(Rc::new(RefCell::new(Const::Void)));
+                            Some(Rc::new(RefCell::new(Const::Void)))
                         }
                     }
-                    return Some(Rc::new(RefCell::new(Const::Void)));
+                    Some(Rc::new(RefCell::new(Const::Void)))
                 }
 
                 StmtKind::While(cond_, body) => {
@@ -676,9 +666,8 @@ impl<'a> EvalCtx<'a> {
 
                         if val.is_none() {
                             return None;
-                        } else if val.as_ref().unwrap().borrow().is_none() {
-                            return None;
                         }
+
                         let tmp = self.expr(cond_, const_);
                         if tmp.borrow().is_none() {
                             return None;
@@ -687,25 +676,25 @@ impl<'a> EvalCtx<'a> {
                             self.maybe_replace_expr(&cond, cond_.id, cond_.pos);
                         }
                     }
-                    return Some(Rc::new(RefCell::new(Const::Void)));
+                    Some(Rc::new(RefCell::new(Const::Void)))
                 }
 
-                _ => return None,
+                _ => None,
             }
         } else {
             match &stmt.kind {
-                StmtKind::CompTime(s) => return self.eval_stmt(s, true),
+                StmtKind::CompTime(s) => self.eval_stmt(s, true),
                 StmtKind::Block(b) => {
                     for s in b.iter() {
                         self.eval_stmt(s, false);
                     }
-                    return Some(rc(Const::Void));
+                    Some(rc(Const::Void))
                 }
                 StmtKind::Expr(e) => {
                     if let ExprKind::CompTime(s) = &e.kind {
-                        return Some(self.expr(s, true));
+                        Some(self.expr(s, true))
                     } else {
-                        return None;
+                        None
                     }
                 }
                 _ => None,
@@ -716,7 +705,7 @@ impl<'a> EvalCtx<'a> {
     fn eval(
         &mut self,
         f: &Function,
-        params: &Vec<(Name, Expr)>,
+        params: &[(Name, Expr)],
         const_: bool,
     ) -> Rc<RefCell<Const>> {
         let old_vars = self.known_vars.clone();
@@ -743,12 +732,12 @@ impl<'a> EvalCtx<'a> {
         if val.is_some() {
             let val: &Const = &val.as_ref().unwrap().borrow();
             if let Const::Ret(val) = val {
-                return val.clone();
+                val.clone()
             } else {
-                return rc(val.clone());
+                rc(val.clone())
             }
         } else {
-            return rc(Const::None);
+            rc(Const::None)
         }
     }
 
@@ -779,7 +768,7 @@ impl<'a> EvalCtx<'a> {
         if let Some(fun) = self.functions.get(&intern("main")) {
             let main_fun = fun[0].clone();
 
-            self.eval(&main_fun, &vec![], false);
+            self.eval(&main_fun, &[], false);
         }
     }
 }
