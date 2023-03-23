@@ -743,25 +743,22 @@ impl<'a> EvalCtx<'a> {
 
     pub fn run(&mut self) {
         for elem in self.ctx.file.elems.iter() {
-            match elem {
-                Elem::Func(f) => {
-                    if f.constant {
-                        if let Some(funs) = self.const_fns.get_mut(&f.name) {
-                            funs.push(f.clone());
-                        } else {
-                            let funs = vec![f.clone()];
-                            self.const_fns.insert(f.name, funs);
-                        }
-                    } else if !f.external && !f.internal {
-                        if let Some(funs) = self.functions.get_mut(&f.name) {
-                            funs.push(f.clone());
-                        } else {
-                            let funs = vec![f.clone()];
-                            self.functions.insert(f.name, funs);
-                        }
+            if let Elem::Func(f) = elem {
+                if f.constant {
+                    if let Some(funs) = self.const_fns.get_mut(&f.name) {
+                        funs.push(f.clone());
+                    } else {
+                        let funs = vec![f.clone()];
+                        self.const_fns.insert(f.name, funs);
+                    }
+                } else if !f.external && !f.internal {
+                    if let Some(funs) = self.functions.get_mut(&f.name) {
+                        funs.push(f.clone());
+                    } else {
+                        let funs = vec![f.clone()];
+                        self.functions.insert(f.name, funs);
                     }
                 }
-                _ => (),
             }
         }
 

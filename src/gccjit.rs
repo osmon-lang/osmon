@@ -91,7 +91,7 @@ impl<'a> Codegen<'a> {
     /// Get type size for sizeof expression
     pub fn ty_size(&self, ty: &Type) -> usize {
         match ty {
-            Type::Vector(v) => return self.ty_size(&v.subtype) * v.size,
+            Type::Vector(v) => self.ty_size(&v.subtype) * v.size,
             Type::Void(_) => 0,
             Type::Basic(basic) => {
                 let name: &str = &str(basic.name);
@@ -122,7 +122,6 @@ impl<'a> Codegen<'a> {
                         } else if let Some(ty) = self
                             .aliases
                             .get(&crate::syntax::interner::intern(s))
-                            .clone()
                         {
                             self.ty_size(ty)
                         } else {
@@ -144,7 +143,7 @@ impl<'a> Codegen<'a> {
             }
             Type::Array(array) => {
                 if array.len.is_some() {
-                    self.ty_size(&array.subtype) * array.len.unwrap() as usize
+                    self.ty_size(&array.subtype) * array.len.unwrap()
                 } else {
                     8
                 }
@@ -216,7 +215,7 @@ impl<'a> Codegen<'a> {
                 if self.structures.contains_key(&struct_.name) {
                     self.structures
                         .get(&struct_.name)
-                        .expect(&format!("Struct {} not found", str(struct_.name)))
+                        .unwrap_or_else(|| panic!("Struct {} not found", str(struct_.name)))
                         .ty
                 } else {
                     let mut fields = vec![];
@@ -224,7 +223,7 @@ impl<'a> Codegen<'a> {
                     let mut types = vec![];
                     for field in struct_.fields.iter() {
                         let field: &StructField = field;
-                        let cty = self.ty_to_ctype(&field.data_type).clone();
+                        let cty = self.ty_to_ctype(&field.data_type);
                         types.push(field.data_type.clone());
                         let name: &str = &str(field.name).to_string();
                         let cfield = self.ctx.new_field(
@@ -237,10 +236,10 @@ impl<'a> Codegen<'a> {
                     }
                     let ty = if struct_.union {
                         self.ctx
-                            .new_union_type(None, &str(struct_.name).to_string(), &fields)
+                            .new_union_type(None, str(struct_.name).to_string(), &fields)
                     } else {
                         self.ctx
-                            .new_struct_type(None, &str(struct_.name).to_string(), &fields)
+                            .new_struct_type(None, str(struct_.name).to_string(), &fields)
                             .as_type()
                     };
                     self.structures.insert(
@@ -273,11 +272,7 @@ impl<'a> Codegen<'a> {
         let _ = self.get_id_type(from.id);
         let do_cast = match type_ {
             Type::Basic(basic) => {
-                if self.structures.contains_key(&basic.name) {
-                    false
-                } else {
-                    true
-                }
+                !self.structures.contains_key(&basic.name)
             }
             Type::Struct(_) => false,
             Type::Ptr(_) => true,
@@ -322,7 +317,7 @@ impl<'a> Codegen<'a> {
                 return Some((function.c, vec![], vec![]));
             }
             if let Some(ty) = &function.this_ast {
-                if this.is_none() {
+                if let Some(..) = this {
                     continue;
                 } else {
                     let this = this.unwrap();

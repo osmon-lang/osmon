@@ -374,17 +374,11 @@ impl Type {
     }
 
     pub fn is_vec(&self) -> bool {
-        match self {
-            Type::Vector(_) => true,
-            _ => false,
-        }
+        matches!(self, Type::Vector(_))
     }
 
     pub fn is_ptr(&self) -> bool {
-        match self {
-            Type::Ptr(_) => true,
-            _ => false,
-        }
+        matches!(self, Type::Ptr(_))
     }
 
     pub fn to_ptr(&self) -> Option<&TypePtr> {
@@ -431,24 +425,15 @@ impl Type {
     }
 
     pub fn is_void(&self) -> bool {
-        match self {
-            Type::Void(_) => true,
-            _ => false,
-        }
+        matches!(self, Type::Void(_))
     }
 
     pub fn is_array(&self) -> bool {
-        match self {
-            Type::Array(_) => true,
-            _ => false,
-        }
+        matches!(self, Type::Array(_))
     }
 
     pub fn is_basic(&self) -> bool {
-        match self {
-            Type::Basic(_) => true,
-            _ => false,
-        }
+        matches!(self, Type::Basic(_))
     }
 
     pub fn pos(&self) -> Position {
@@ -576,11 +561,11 @@ impl Function {
                     if expr.is_some() {
                         let expr = expr.as_mut().unwrap();
                         if expr.id == id {
-                            expr.kind = to.kind.clone();
+                            expr.kind = to.kind;
                             return true;
                         }
                     }
-                    return false;
+                    false
                 }
                 StmtKind::Block(block) => {
                     for stmt in block.iter_mut() {
@@ -589,14 +574,14 @@ impl Function {
                         }
                     }
 
-                    return false;
+                    false
                 }
                 StmtKind::Expr(expr) => {
                     if expr.id == id {
                         *expr = Box::new(to);
                         return true;
                     }
-                    return false;
+                    false
                 }
                 StmtKind::If(e, then, other) => {
                     if e.id == id {
@@ -608,26 +593,18 @@ impl Function {
                     }
                     if other.is_some() {
                         let other = other.as_mut().unwrap();
-                        if replace_stmt(other, id, to.clone()) {
-                            return true;
-                        } else {
-                            return false;
-                        }
+                        return replace_stmt(other, id, to)
                     }
-                    return false;
+                    false
                 }
                 StmtKind::While(expr, then) => {
                     if expr.id == id {
                         *expr = Box::new(to);
                         return true;
                     }
-                    if replace_stmt(then, id, to.clone()) {
-                        return true;
-                    } else {
-                        return false;
-                    }
+                    replace_stmt(then, id, to)
                 }
-                StmtKind::Loop(body) => replace_stmt(body, id, to.clone()),
+                StmtKind::Loop(body) => replace_stmt(body, id, to),
                 StmtKind::Var(_, _, _, expr) => {
                     if expr.is_some() {
                         let expr = expr.as_mut().unwrap();
@@ -671,10 +648,7 @@ pub struct Expr {
 
 impl Expr {
     pub fn is_deref(&self) -> bool {
-        match &self.kind {
-            ExprKind::Deref(_) => true,
-            _ => false,
-        }
+        matches!(&self.kind, ExprKind::Deref(_))
     }
 
     pub fn is_bool(&self, val: bool) -> bool {
@@ -688,9 +662,9 @@ impl Expr {
 impl Expr {
     pub fn map<U>(&self, mut f: impl FnMut(&Self) -> U, or_: U) -> Vec<U> {
         match &self.kind {
-            ExprKind::Unary(_, expr) => return vec![f(expr)],
-            ExprKind::Binary(_, e1, e2) => return vec![f(e1), f(e2)],
-            ExprKind::ArrayIdx(e1, e2) => return vec![f(e1), f(e2)],
+            ExprKind::Unary(_, expr) => vec![f(expr)],
+            ExprKind::Binary(_, e1, e2) => vec![f(e1), f(e2)],
+            ExprKind::ArrayIdx(e1, e2) => vec![f(e1), f(e2)],
             ExprKind::Array(_, exprs) => exprs.iter().map(|e| f(e)).collect(),
             ExprKind::Call(_, e1, e2) => {
                 let mut v = vec![];
@@ -765,10 +739,7 @@ pub enum StmtKind {
 
 impl StmtKind {
     pub fn is_if(&self) -> bool {
-        match self {
-            StmtKind::If(_, _, _) => true,
-            _ => false,
-        }
+        matches!(self, StmtKind::If(_, _, _))
     }
 }
 
