@@ -1,7 +1,5 @@
 #![warn(unused_must_use)]
 #![warn(rust_2018_idioms)]
-#![allow(clippy::map_entry)]
-#![allow(clippy::result_large_err)]
 #![allow(clippy::redundant_closure)]
 #![allow(clippy::if_same_then_else)]
 #![allow(clippy::vec_box)]
@@ -156,7 +154,7 @@ impl Context {
         use syntax::ast::Elem;
         for elem in self.file.elems.clone().iter() {
             if let Elem::Import(path) = elem {
-                self.import(path);
+                self.import(&path);
             }
         }
     }

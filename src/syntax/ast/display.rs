@@ -33,9 +33,9 @@ impl Display for ExprKind {
             ExprKind::Ident(name) => write!(f, "{}", name),
             ExprKind::Str(s) => write!(f, "{:?}", s),
             ExprKind::Struct(path, fields) => {
-                writeln!(f, "{} {{", path.name())?;
+                write!(f, "{} {{\n", path.name())?;
                 for field in fields.iter() {
-                    writeln!(f, "\t    {}: {}", field.name, field.expr)?;
+                    write!(f, "\t    {}: {}\n", field.name, field.expr)?;
                 }
                 write!(f, "\n \t}}")
             }
@@ -78,23 +78,23 @@ impl Display for StmtKind {
             StmtKind::Continue => write!(f, "continue"),
             StmtKind::Break => write!(f, "break"),
             StmtKind::Block(block) => {
-                writeln!(f, "{{")?;
+                write!(f, "{{\n")?;
                 for stmt in block.iter() {
                     write!(f, "\t{}", stmt)?
                 }
                 write!(f, "\n}}\n")
             }
-            StmtKind::Expr(expr) => writeln!(f, "{}", expr),
+            StmtKind::Expr(expr) => write!(f, "{}\n", expr),
             StmtKind::If(cond, then, or) => {
-                writeln!(f, "if {} {{", cond)?;
+                write!(f, "if {} {{\n", cond)?;
                 write!(f, "\t\t{}", then)?;
                 write!(f, "}}")?;
                 if or.is_some() {
                     write!(f, " else ")?;
-                    writeln!(f, " \t{} ", or.as_ref().unwrap())?;
-                    writeln!(f, "}}")?;
+                    write!(f, " \t{} \n", or.as_ref().unwrap())?;
+                    write!(f, "}}\n")?;
                 }
-                writeln!(f)
+                write!(f, "\n")
             }
             StmtKind::CompTime(s) => write!(f, "constexpr {}", s),
             StmtKind::While(cond, body) => write!(f, "while {} \n {{\n {} \n}}", cond, body),
@@ -115,7 +115,7 @@ impl Display for StmtKind {
                 if expr.is_some() {
                     write!(f, " = {}", expr.as_ref().unwrap())?;
                 }
-                writeln!(f)
+                write!(f, "\n")
             }
         }
     }
@@ -149,17 +149,17 @@ impl Display for Function {
         if self.body.is_some() {
             write!(f, "{}", self.body.as_ref().unwrap())?
         }
-        writeln!(f)
+        write!(f, "\n")
     }
 }
 
 impl Display for Struct {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        writeln!(f, "struct {} {{", self.name)?;
+        write!(f, "struct {} {{\n", self.name)?;
         for field in self.fields.iter() {
-            writeln!(f, "\t{}: {}", field.name, field.data_type)?;
+            write!(f, "\t{}: {}\n", field.name, field.data_type)?;
         }
-        writeln!(f, "}}")
+        write!(f, "}}\n")
     }
 }
 
@@ -172,7 +172,7 @@ impl Display for Global {
         if self.expr.is_some() {
             write!(f, " = {}", self.expr.as_ref().unwrap())?;
         }
-        writeln!(f)
+        write!(f, "\n")
     }
 }
 
@@ -186,7 +186,7 @@ impl Display for Macro {
             }
         }
         write!(f, ") ")?;
-        writeln!(f, "{{")?;
+        write!(f, "{{\n")?;
         for tok in self.body.iter() {
             match tok {
                 MacroToken::Token(tok) => write!(f, "   {}", tok.name())?,

@@ -543,7 +543,7 @@ impl Lexer {
 }
 
 fn is_digit(ch: Option<char>) -> bool {
-    ch.map(|ch| ch.is_ascii_digit()).unwrap_or(false)
+    ch.map(|ch| ch.is_digit(10)).unwrap_or(false)
 }
 
 fn is_digit_or_underscore(ch: Option<char>, base: IntBase) -> bool {
@@ -574,7 +574,7 @@ fn is_operator(ch: Option<char>) -> bool {
 
 fn is_identifier_start(ch: Option<char>) -> bool {
     match ch {
-        Some(ch) => ch.is_ascii_lowercase() || ch.is_ascii_uppercase() || ch == '_',
+        Some(ch) => (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || ch == '_',
         _ => false,
     }
 }

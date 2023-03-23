@@ -767,7 +767,7 @@ impl<'a> Parser<'a> {
     fn parse_import(&mut self) -> Result<Elem, MsgWithPos> {
         if let TokenKind::String(s) = &self.token.kind.clone() {
             self.advance_token()?;
-            Ok(Elem::Import(s.clone()))
+            return Ok(Elem::Import(s.clone()));
         } else {
             unimplemented!()
             //Err(MsgWithPos::new(self.lexer.reader.path().to_owned(),self.src(),
@@ -1162,7 +1162,7 @@ impl<'a> Parser<'a> {
                 return Ok(Type::create_array(
                     self.generate_id(),
                     pos,
-                    Box::new(ty),
+                    Box::new(ty.clone()),
                     None,
                 ));
             } else {
@@ -1176,7 +1176,7 @@ impl<'a> Parser<'a> {
                 return Ok(Type::create_array(
                     self.generate_id(),
                     pos,
-                    Box::new(ty),
+                    Box::new(ty.clone()),
                     Some(len),
                 ));
             }
@@ -1329,7 +1329,7 @@ impl<'a> Parser<'a> {
                 self.lexer.path().to_string(),
                 self.src(),
                 self.token.position,
-                Msg::ExpectedFactor(self.token.name()),
+                Msg::ExpectedFactor(self.token.name().clone()),
             )),
         }
     }

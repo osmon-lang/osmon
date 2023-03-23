@@ -30,8 +30,11 @@ pub fn ty_is_any_int(ty: &Type) -> bool {
     match ty {
         Type::Basic(basic) => {
             let s: &str = &str(basic.name).to_string();
-            matches!(s, "uchar" | "char" | "u8" | "u16" | "u32" | "u64" | "i64" | "i32" | "i16" | "i8"
-                | "isize" | "usize")
+            match s {
+                "uchar" | "char" | "u8" | "u16" | "u32" | "u64" | "i64" | "i32" | "i16" | "i8"
+                | "isize" | "usize" => true,
+                _ => false,
+            }
         }
 
         _ => false,
@@ -42,7 +45,10 @@ pub fn ty_is_any_float(ty: &Type) -> bool {
     match ty {
         Type::Basic(basic) => {
             let s: &str = &str(basic.name).to_string();
-            matches!(s, "f32" | "f64")
+            match s {
+                "f32" | "f64" => true,
+                _ => false,
+            }
         }
 
         _ => false,
@@ -163,7 +169,7 @@ impl<'a> SemCheck<'a> {
 
         for elem in elems.iter() {
             if let Elem::Import(import) = elem {
-                let import = if self.ctx.file.root.is_empty() {
+                let import = if self.ctx.file.root.len() == 0 {
                     import.to_owned()
                 } else {
                     format!("{}/{}", self.ctx.file.root, import)
@@ -184,7 +190,7 @@ impl<'a> SemCheck<'a> {
                 use lexer::reader::Reader;
 
                 let reader =
-                    Reader::from_file(&import).unwrap_or_else(|_| panic!("File {} not found", import));
+                    Reader::from_file(&import).expect(&format!("File {} not found", import));
                 let mut parser = Parser::new(reader, &mut file);
                 parser.parse().expect("Error");
 
@@ -218,7 +224,7 @@ impl<'a> SemCheck<'a> {
                 for elem in ctx.file.elems.iter() {
                     match elem {
                         Elem::Func(f) => {
-                            let funs = self.imported_funs.get(&f.name);
+                            let funs = self.imported_funs.get(&f.name).clone();
                             if funs.is_none() {
                                 let funs = vec![f.clone()];
                                 self.imported_funs.insert(f.name, funs);
@@ -363,7 +369,7 @@ impl<'a> SemCheck<'a> {
                         params,
                         ret,
                         this_name,
-                        this: if let Some(..) = this {
+                        this: if this.is_some() {
                             Some(this.unwrap().clone())
                         } else {
                             None
@@ -385,7 +391,7 @@ impl<'a> SemCheck<'a> {
                         return Err(ErrorWPos::new(
                             c.pos,
                             Error::GlobalExists(str(c.name).to_string()),
-                            src,
+                            src.clone(),
                         ));
                     }
 
@@ -736,7 +742,7 @@ impl<'a> SemCheck<'a> {
                 let ty = self.infer_type(&ty);
                 if let Type::Ptr(ty) = ty {
                     self.types.insert(expr.id, *ty.subtype.clone());
-                    *ty.subtype.clone()
+                    return *ty.subtype.clone();
                 } else {
                     error!(format!("Dereferencing non-ptr type {}", ty), expr.pos);
                 }
