@@ -8,7 +8,7 @@ use crate::{
 
 use crate::{ast::*, syntax::interner::Name, Context};
 // use std::intrinsics::transmute;
-use wrc::WRC as Rc;
+use wrc::Wrc as Rc;
 
 pub fn rc<T>(v: T) -> Rc<RefCell<T>> {
     Rc::new(RefCell::new(v))
