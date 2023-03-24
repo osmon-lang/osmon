@@ -11,7 +11,6 @@ Statically compilation component for Osmon.
 
 [![GitHub top language](https://img.shields.io/github/languages/top/osmon-lang/havo?color=232323&logo=github&labelColor=232323)](https://github.com/osmon-lang/havo)
 [![Channel](https://img.shields.io/badge/telegram-grey?color=232323&label=chat&logo=telegram&labelColor=232323)](https://t.me/osmonlang)
-[![Release CI](https://img.shields.io/github/actions/workflow/status/osmon-lang/havo/release.yml?color=232323&label=release&logo=github-actions&labelColor=232323)](https://github.com/osmon-lang/havo/actions/workflows/release.yml)
 [![Tests CI](https://img.shields.io/github/actions/workflow/status/osmon-lang/havo/test.yml?color=232323&label=test&logo=github-actions&labelColor=232323)](https://github.com/osmon-lang/havo/actions/workflows/test.yml)
  
 ## About
