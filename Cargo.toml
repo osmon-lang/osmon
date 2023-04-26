@@ -1,6 +1,6 @@
 [package]
 name = "havo"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 homepage = "https://osmon.dev"
 documentation = "https://wiki.osmon.dev"
@@ -18,7 +18,7 @@ wrc = "2.0.0"
 lazy_static = "1.4.0"
 colored = "2.0.0"
 structopt = "0.2"
-gccjit = {git = "https://github.com/osmon-lang/gccjit"}
+osmojit = "0.4.0"
 clap = "4.1.11"
 linked-hash-map = "0.5.6"
 

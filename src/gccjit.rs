@@ -1,5 +1,5 @@
 use crate::Context as CContext;
-use gccjit::{
+use osmojit::{
     block::{BinaryOp, Block, ComparisonOp, UnaryOp},
     ctx::{Context, GlobalKind, OutputKind},
     field::Field,
@@ -26,7 +26,7 @@ use std::{
 fn gccloc_from_loc(
     ctx: &Context,
     loc: &crate::syntax::position::Position,
-) -> gccjit::location::Location {
+) -> osmojit::location::Location {
     ctx.new_location(str(loc.file).to_string(), loc.line as _, loc.column as _)
 }
 
@@ -474,9 +474,9 @@ impl<'a> Codegen<'a> {
 
         ctx.set_name(name);
         ctx.set_dump_gimple(context.gimple);
-        use gccjit::sys::*;
+        use osmojit::sys::*;
         unsafe {
-            let ptr = gccjit::ctx::context_get_ptr(&ctx);
+            let ptr = osmojit::ctx::context_get_ptr(&ctx);
             gcc_jit_context_set_bool_allow_unreachable_blocks(ptr, true as _);
         }
         Codegen {
