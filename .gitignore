@@ -11,7 +11,6 @@ lib/havo_cstd.o
 lib/libhavostd.so
 
 # Uncompiled libhavostd
-lib/havo_cstd.c
 std/libhavostd.so
 
 # Copy of the standard library
