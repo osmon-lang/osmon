@@ -1,5 +1,3 @@
-#![warn(unused_must_use)]
-#![warn(rust_2018_idioms)]
 #![allow(clippy::redundant_closure)]
 #![allow(clippy::vec_box)]
 #![allow(dead_code)]
@@ -7,7 +5,6 @@
 #![allow(temporary_cstring_as_ptr)]
 #![allow(clippy::result_large_err)]
 #![allow(clippy::unnecessary_unwrap)]
-#[macro_use]
 pub mod macros;
 pub mod ast2cpp;
 pub mod err;
