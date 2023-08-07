@@ -525,7 +525,7 @@ impl<'a> ConstEval<'a> {
                             continue;
                         }
                         let mut params_match = false;
-                        if args.len() == 0 && fun.params.len() == 0 {
+                        if args.is_empty() && fun.params.is_empty() {
                             params_match = true;
                         } else {
                             for (i, arg) in args.iter().enumerate() {
@@ -558,7 +558,7 @@ impl<'a> ConstEval<'a> {
                             continue;
                         }
                         let mut params_match = false;
-                        if args.len() == 0 && fun.params.len() == 0 {
+                        if args.is_empty() && fun.params.is_empty() {
                             params_match = true;
                         } else {
                             for (i, arg) in args.iter().enumerate() {
