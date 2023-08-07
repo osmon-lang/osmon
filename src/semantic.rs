@@ -390,7 +390,7 @@ impl<'a> SemCheck<'a> {
                     }
 
                     let mut c = c.clone();
-                    c.typ = Box::new(self.infer_type(&*c.typ));
+                    c.typ = Box::new(self.infer_type(&c.typ));
                     self.globals.insert(c.name, c.clone());
                 }
                 Elem::Struct(s) => {

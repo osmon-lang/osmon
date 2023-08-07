@@ -11,6 +11,9 @@ pub fn rc<T>(v: T) -> Rc<RefCell<T>> {
 }
 
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
+
+type ConstBuiltin = fn(&[Rc<RefCell<Const>>]) -> Rc<RefCell<Const>>;
+
 /// Constant value that known at compile-time
 #[derive(Clone, PartialOrd, Debug)]
 pub enum Const {
@@ -579,8 +582,8 @@ impl<'a> ConstEval<'a> {
                         return self.eval_constfn(&params, func.body.as_ref().unwrap(), args);
                     }
                 } else if false {
-                    let builtin = self.builtins.get(&name.name()).unwrap().clone();
-                    let builtin: fn(&[Rc<RefCell<Const>>]) -> Rc<RefCell<Const>> =
+                    let builtin = *self.builtins.get(&name.name()).unwrap();
+                    let builtin: ConstBuiltin =
                         unsafe { transmute(builtin) };
                     let mut params = vec![];
                     for arg in args.iter() {
@@ -635,7 +638,7 @@ impl<'a> ConstEval<'a> {
         &mut self,
         params: &[Name],
         body: &Stmt,
-        args: &Vec<Box<Expr>>,
+        args: &[Box<Expr>],
     ) -> Rc<RefCell<Const>> {
         let old_vars = self.known_vars.clone();
         //self.known_vars.clear();
@@ -879,18 +882,18 @@ impl<'a> ConstEval<'a> {
         for elem in self.ctx.file.elems.clone().iter() {
             if let Elem::Func(func) = elem {
                 if func.constant {
-                    if self.const_functions.contains_key(&func.name) {
+                    if let std::collections::hash_map::Entry::Vacant(e) = self.const_functions.entry(func.name) {
+                        e.insert(vec![func.clone()]);
+                    } else {
                         let funcs = self.const_functions.get_mut(&func.name).unwrap();
                         funcs.push(func.clone());
-                    } else {
-                        self.const_functions.insert(func.name, vec![func.clone()]);
                     }
                 } else if !func.internal && !func.external {
-                    if self.functions.contains_key(&func.name) {
+                    if let std::collections::hash_map::Entry::Vacant(e) = self.functions.entry(func.name) {
+                        e.insert(vec![func.clone()]);
+                    } else {
                         let funcs = self.functions.get_mut(&func.name).unwrap();
                         funcs.push(func.clone());
-                    } else {
-                        self.functions.insert(func.name, vec![func.clone()]);
                     }
                 }
             }

@@ -6,6 +6,7 @@
 #![allow(unused_variables)]
 #![allow(temporary_cstring_as_ptr)]
 #![allow(clippy::result_large_err)]
+#![allow(clippy::unnecessary_unwrap)]
 #[macro_use]
 pub mod macros;
 pub mod ast2cpp;

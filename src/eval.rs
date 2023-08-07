@@ -403,9 +403,7 @@ impl<'a> EvalCtx<'a> {
                         values.push(val);
                     }
 
-                    let val = rc(Const::Array(rc(values), pos_and_id, ty.clone()));
-
-                    val
+                    rc(Const::Array(rc(values), pos_and_id, ty.clone()))
                 }
                 ExprKind::ArrayIdx(array_e, idx_e) => {
                     let array = self.expr(array_e, const_);

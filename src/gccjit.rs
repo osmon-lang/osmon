@@ -887,10 +887,10 @@ impl<'a> Codegen<'a> {
             ExprKind::Ident(name) => {
                 if self.constants.contains_key(name) {
                     let constexpr = self.constants.get(name).unwrap().clone();
-                    if let Some(lval) = self.expr_to_lvalue(&constexpr) {
-                        return lval.to_rvalue();
+                    return if let Some(lval) = self.expr_to_lvalue(&constexpr) {
+                        lval.to_rvalue()
                     } else {
-                        return self.gen_expr(&constexpr);
+                        self.gen_expr(&constexpr)
                     }
                 };
                 self.expr_to_lvalue(expr).unwrap().to_rvalue()
@@ -1086,15 +1086,12 @@ impl<'a> Codegen<'a> {
                     );
                     self.tmp_id += 1;
 
-                    let val = tmp.get_address(Some(gccloc_from_loc(&self.ctx, &expr.pos)));
-                    //self.ctx.new_cast(None,val,cty)
-                    val
+                    tmp.get_address(Some(gccloc_from_loc(&self.ctx, &expr.pos)))
                 } else {
-                    let val = val
-                        .unwrap()
-                        .get_address(Some(gccloc_from_loc(&self.ctx, &expr.pos)));
-                    //self.ctx.new_cast(None,val,cty)
                     val
+                        .unwrap()
+                        .get_address(Some(gccloc_from_loc(&self.ctx, &expr.pos)))
+
                 }
             }
             ExprKind::Conv(val, to) => {
@@ -1153,8 +1150,7 @@ impl<'a> Codegen<'a> {
                                 id: expr.id,
                                 kind: ExprKind::AddressOf(expr),
                             });
-                            let val = self.ctx.new_cast(None, val, cty);
-                            val
+                            self.ctx.new_cast(None, val, cty)
                         } else {
                             self.gen_expr(&expr)
                         };
