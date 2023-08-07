@@ -560,11 +560,10 @@ impl<'a> SemCheck<'a> {
         let _id = stmt.id;
         match &stmt.kind {
             StmtKind::CFor(var, cond, then, body) => {
-                let prev;
-                if !self.vars.is_empty() {
-                    prev = self.vars.last().unwrap().clone();
+                let prev = if !self.vars.is_empty() {
+                    self.vars.last().unwrap().clone()
                 } else {
-                    prev = HashMap::new();
+                    HashMap::new()
                 };
                 self.vars.push(prev);
                 self.tc_stmt(var);
@@ -595,11 +594,10 @@ impl<'a> SemCheck<'a> {
                 if e.is_bool(true) {
                     warn!("Consider using loop instead of `while true`", stmt.pos);
                 }
-                let prev;
-                if !self.vars.is_empty() {
-                    prev = self.vars.last().unwrap().clone();
+                let prev = if !self.vars.is_empty() {
+                    self.vars.last().unwrap().clone()
                 } else {
-                    prev = HashMap::new();
+                    HashMap::new()
                 };
                 self.tc_expr(e);
                 self.vars.push(prev);
@@ -657,11 +655,10 @@ impl<'a> SemCheck<'a> {
                 }
             }
             StmtKind::Block(stmts) => {
-                let prev;
-                if !self.vars.is_empty() {
-                    prev = self.vars.last().unwrap().clone();
+                let prev = if !self.vars.is_empty() {
+                    self.vars.last().unwrap().clone()
                 } else {
-                    prev = HashMap::new();
+                    HashMap::new()
                 };
                 self.vars.push(prev);
                 for stmt in stmts.iter() {
@@ -791,7 +788,6 @@ impl<'a> SemCheck<'a> {
                             if sig.params == params {
                                 return *sig.ret.clone();
                             }*/
-                            let this_sig;
                             if params.is_empty() && sig.params.is_empty() {
                                 return *sig.ret.clone();
                             }
@@ -809,7 +805,7 @@ impl<'a> SemCheck<'a> {
                                     // ty_is_any_int(&sig.params[i]);};
                                 }
                             }
-                            this_sig = if sig.variadic {
+                            let this_sig = if sig.variadic {
                                 types_good && sig.variadic
                             } else {
                                 types_good
