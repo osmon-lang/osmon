@@ -34,17 +34,14 @@ pub enum Const {
 
 impl Const {
     fn is_void(&self) -> bool {
-        match self {
-            Const::Void => true,
-            _ => false,
-        }
+        matches!(self, Const::Void)
     }
 
     /// Translate Const value into Expression
     fn to_kind(&self) -> ExprKind {
         match self {
-            Const::Imm(imm, suffix, base) => ExprKind::Int(*imm, base.clone(), suffix.clone()),
-            Const::Float(f, suffix) => ExprKind::Float(*f, suffix.clone()),
+            Const::Imm(imm, suffix, base) => ExprKind::Int(*imm, *base, *suffix),
+            Const::Float(f, suffix) => ExprKind::Float(*f, *suffix),
             Const::Bool(b) => ExprKind::Bool(*b),
             Const::Struct(name, fields) => {
                 let mut args = vec![];
@@ -80,8 +77,8 @@ impl PartialEq for Const {
             (Const::Float(f, _), Const::Float(f2, _)) => f == f2,
             (Const::Bool(b), Const::Bool(b2)) => b == b2,
             (Const::Struct(s1name, fields1), Const::Struct(s2name, fields2)) => {
-                if fields1.len() == 0 && fields2.len() == 0 {
-                    return s1name == s2name;
+                if fields1.is_empty() && fields2.is_empty() {
+                    s1name == s2name
                 } else {
                     let mut fields_ok = false;
                     for (f1, f2) in fields1.iter().zip(fields2.iter()) {
@@ -97,10 +94,7 @@ impl PartialEq for Const {
 
 impl Const {
     fn is_none(&self) -> bool {
-        match self {
-            Const::None => true,
-            _ => false,
-        }
+        matches!(self, Const::None)
     }
 }
 /// return size of type
@@ -614,17 +608,15 @@ impl<'a> ConstEval<'a> {
                         let val = self.eval(arg);
                         if val.borrow().is_none() {
                             return rc(Const::None);
-                        } else {
-                            if let Elem::Func(f) = &mut self.ctx.file.elems[self.id] {
-                                f.replace_expr_to(
-                                    arg.id,
-                                    Expr {
-                                        id: arg.id,
-                                        pos: expr.pos,
-                                        kind: val.borrow().to_kind(),
-                                    },
-                                );
-                            }
+                        } else if let Elem::Func(f) = &mut self.ctx.file.elems[self.id] {
+                            f.replace_expr_to(
+                                arg.id,
+                                Expr {
+                                    id: arg.id,
+                                    pos: expr.pos,
+                                    kind: val.borrow().to_kind(),
+                                },
+                            );
                         }
                     }
                 }

@@ -236,7 +236,7 @@ impl<'a> Codegen<'a> {
                     }
                     let ty = if struct_.union {
                         self.ctx
-                            .new_union_type(None, &str(struct_.name).to_string(), &fields)
+                            .new_union_type(None, str(struct_.name).to_string(), &fields)
                     } else {
                         self.ctx
                             .new_struct_type(None, &str(struct_.name).to_string(), &fields)
@@ -359,15 +359,13 @@ impl<'a> Codegen<'a> {
             for (index, param) in params.iter().enumerate() {
                 if index < function.f.params.len() {
                     params_okay = param == &*function.f.params[index].1;
+                } else if function.f.variadic && params_okay {
+                    not_found = false;
+                    break;
                 } else {
-                    if function.f.variadic && params_okay {
-                        not_found = false;
-                        break;
-                    } else {
-                        params_okay = false;
-                        not_found = true;
-                        break;
-                    }
+                    params_okay = false;
+                    not_found = true;
+                    break;
                 }
 
                 if !params_okay {
@@ -420,22 +418,20 @@ impl<'a> Codegen<'a> {
                 continue;
             }
 
-            if function.params.len() == 0 && params.len() == 0 && this.is_none() {
+            if function.params.is_empty() && params.is_empty() && this.is_none() {
                 return Some((function.clone(), vec![]));
             }
 
             for (index, param) in params.iter().enumerate() {
                 if index < function.params.len() {
                     params_okay = param == &*function.params[index].1;
+                } else if function.variadic && params_okay {
+                    not_found = false;
+                    break;
                 } else {
-                    if function.variadic && params_okay {
-                        not_found = false;
-                        break;
-                    } else {
-                        params_okay = false;
-                        not_found = true;
-                        break;
-                    }
+                    params_okay = false;
+                    not_found = true;
+                    break;
                 }
 
                 if !params_okay {
@@ -722,7 +718,7 @@ impl<'a> Codegen<'a> {
                 let local = self.cur_func.unwrap().new_local(
                     Some(gccloc_from_loc(&self.ctx, &stmt.pos)),
                     cty,
-                    &str(*name).to_string(),
+                    str(*name).to_string(),
                 );
                 if init.is_some() {
                     let expr = init.as_ref().unwrap();
@@ -756,12 +752,12 @@ impl<'a> Codegen<'a> {
                 let then_name = self.block_name_new();
                 let else_name = self.block_name_new();
 
-                let bb_then = func.new_block(&format!("if_true:{}", then_name));
-                let bb_else = func.new_block(&format!("if_false:{}", else_name));
+                let bb_then = func.new_block(format!("if_true:{}", then_name));
+                let bb_else = func.new_block(format!("if_false:{}", else_name));
                 let bb_merge: Block = if otherwise.is_some() {
                     let merge_name = self.block_name_new();
 
-                    func.new_block(&format!("after:{}", merge_name))
+                    func.new_block(format!("after:{}", merge_name))
                 } else {
                     bb_else
                 };
@@ -957,9 +953,7 @@ impl<'a> Codegen<'a> {
                     ),
                 };
 
-                if !self.context.types.contains_key(&expr.id) {
-                    self.context.types.insert(expr.id, ty);
-                }
+                self.context.types.entry(expr.id).or_insert(ty);
                 val
             }
             ExprKind::Str(s) => self.ctx.new_string_literal(s),
@@ -1083,7 +1077,7 @@ impl<'a> Codegen<'a> {
                         Some(gccloc_from_loc(&self.ctx, &expr_.pos)),
                         GlobalKind::Internal,
                         rval.get_type(),
-                        &format!("_{}_", self.tmp_id.to_string()),
+                        &format!("_{}_", self.tmp_id),
                     );
                     self.cur_block.unwrap().add_assignment(
                         Some(gccloc_from_loc(&self.ctx, &expr_.pos)),
@@ -1126,7 +1120,7 @@ impl<'a> Codegen<'a> {
                         for p in param_types.iter() {
                             print!(" {} ", p);
                         }
-                        print!(") not found\n");
+                        println!(") not found");
                         std::process::exit(-1);
                     }
                     let (val, c_types, ast_types) = val.unwrap();
@@ -1186,7 +1180,7 @@ impl<'a> Codegen<'a> {
                         for p in param_types.iter() {
                             print!(" {} ", p);
                         }
-                        print!(") not found\n");
+                        println!(") not found");
                         std::process::exit(-1);
                     }
 
@@ -1427,7 +1421,7 @@ impl<'a> Codegen<'a> {
                 .new_rvalue_from_int(self.ctx.new_type::<char>(), *c as i32),
             ExprKind::Null => self
                 .ctx
-                .new_rvalue_from_ptr(self.ctx.new_type::<*mut u8>(), 0 as *mut ()),
+                .new_rvalue_from_ptr(self.ctx.new_type::<*mut u8>(), std::ptr::null_mut::<()>()),
             v => panic!("{:?}", v),
         }
     }
@@ -1442,7 +1436,7 @@ impl<'a> Codegen<'a> {
                     let mut types = vec![];
                     for field in s.fields.iter() {
                         let field: &StructField = field;
-                        let cty = self.ty_to_ctype(&field.data_type).clone();
+                        let cty = self.ty_to_ctype(&field.data_type);
                         types.push(field.data_type.clone());
                         let name: &str = &str(field.name).to_string();
                         let cfield = self.ctx.new_field(

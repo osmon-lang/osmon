@@ -49,8 +49,8 @@ impl PartialEq for Const {
             (Const::Float(f, _), Const::Float(f2, _)) => f == f2,
             (Const::Bool(b), Const::Bool(b2)) => b == b2,
             (Const::Struct(s1name, fields1), Const::Struct(s2name, fields2)) => {
-                if fields1.len() == 0 && fields2.len() == 0 {
-                    return s1name == s2name;
+                if fields1.is_empty() && fields2.is_empty() {
+                    s1name == s2name
                 } else {
                     let mut fields_ok = false;
                     for (f1, f2) in fields1.iter().zip(fields2.iter()) {
@@ -66,24 +66,18 @@ impl PartialEq for Const {
 
 impl Const {
     fn is_void(&self) -> bool {
-        match self {
-            Const::Void => true,
-            _ => false,
-        }
+        matches!(self, Const::Void)
     }
 
     fn is_none(&self) -> bool {
-        match self {
-            Const::None => true,
-            _ => false,
-        }
+        matches!(self, Const::None)
     }
 
     /// Translate Const value into Expression
     fn to_kind(&self) -> ExprKind {
         match self {
-            Const::Imm(imm, suffix, base) => ExprKind::Int(*imm, base.clone(), suffix.clone()),
-            Const::Float(f, suffix) => ExprKind::Float(*f, suffix.clone()),
+            Const::Imm(imm, suffix, base) => ExprKind::Int(*imm, *base, *suffix),
+            Const::Float(f, suffix) => ExprKind::Float(*f, *suffix),
             Const::Bool(b) => ExprKind::Bool(*b),
             Const::Struct(name, fields) => {
                 let mut args = vec![];
@@ -206,8 +200,8 @@ impl<'a> EvalCtx<'a> {
     /// If values of lhs and rhs known at compile time evaluates binary
     /// operation
     fn eval_binop(&mut self, op: &str, lhs: &Expr, rhs: &Expr, const_: bool) -> Rc<RefCell<Const>> {
-        let c1 = self.expr(&lhs, const_);
-        let c2 = self.expr(&rhs, const_);
+        let c1 = self.expr(lhs, const_);
+        let c2 = self.expr(rhs, const_);
 
         if c1.borrow().is_none() || c2.borrow().is_none() {
             return Rc::new(RefCell::new(Const::None));
@@ -777,7 +771,7 @@ impl<'a> EvalCtx<'a> {
         if let Some(fun) = self.functions.get(&intern("main")) {
             let main_fun = fun[0].clone();
 
-            self.eval(&main_fun, &vec![], false);
+            self.eval(&main_fun, &[], false);
         }
     }
 }
