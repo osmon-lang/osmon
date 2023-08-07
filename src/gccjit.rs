@@ -1378,54 +1378,6 @@ impl<'a> Codegen<'a> {
                         l,
                         r,
                     )
-                } else if ty_is_any_float(&t1) && ty_is_any_float(&t2) {
-                    let cty = self.ty_to_ctype(&t1);
-                    let op: &str = op;
-                    let binary = match op {
-                        "+" => BinaryOp::Plus,
-                        "-" => BinaryOp::Minus,
-                        "*" => BinaryOp::Mult,
-                        "/" => BinaryOp::Divide,
-                        "%" => BinaryOp::Modulo,
-
-                        _ => unreachable!(),
-                    };
-                    let l = self.gen_expr(e1);
-                    let r = self.gen_expr(e2);
-                    let r = self
-                        .ctx
-                        .new_cast(Some(gccloc_from_loc(&self.ctx, &e2.pos)), r, cty);
-                    self.ctx.new_binary_op(
-                        Some(gccloc_from_loc(&self.ctx, &expr.pos)),
-                        binary,
-                        cty,
-                        l,
-                        r,
-                    )
-                } else if ty_is_any_float(&t1) && ty_is_any_int(&t2) {
-                    let cty = self.ty_to_ctype(&t1);
-                    let op: &str = op;
-                    let binary = match op {
-                        "+" => BinaryOp::Plus,
-                        "-" => BinaryOp::Minus,
-                        "*" => BinaryOp::Mult,
-                        "/" => BinaryOp::Divide,
-                        "%" => BinaryOp::Modulo,
-
-                        _ => unreachable!(),
-                    };
-                    let l = self.gen_expr(e1);
-                    let r = self.gen_expr(e2);
-                    let r = self
-                        .ctx
-                        .new_cast(Some(gccloc_from_loc(&self.ctx, &e2.pos)), r, cty);
-                    self.ctx.new_binary_op(
-                        Some(gccloc_from_loc(&self.ctx, &expr.pos)),
-                        binary,
-                        cty,
-                        l,
-                        r,
-                    )
                 } else if t1.is_vec() && ty_is_any_int(&t2) || ty_is_any_float(&t2) {
                     let cty = self.ty_to_ctype(&t1);
                     let op: &str = op;

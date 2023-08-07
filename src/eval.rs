@@ -676,9 +676,12 @@ impl<'a> EvalCtx<'a> {
 
                         if val.is_none() {
                             return None;
-                        } else if val.as_ref().unwrap().borrow().is_none() {
+                        }
+
+                        if val.as_ref().unwrap().borrow().is_none() {
                             return None;
                         }
+
                         let tmp = self.expr(cond_, const_);
                         if tmp.borrow().is_none() {
                             return None;

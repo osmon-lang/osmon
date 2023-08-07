@@ -763,7 +763,9 @@ impl<'a> ConstEval<'a> {
 
                     if val.is_none() {
                         return None;
-                    } else if val.as_ref().unwrap().borrow().is_none() {
+                    }
+
+                    if val.as_ref().unwrap().borrow().is_none() {
                         return None;
                     }
                 }
