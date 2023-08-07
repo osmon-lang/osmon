@@ -30,11 +30,8 @@ pub fn ty_is_any_int(ty: &Type) -> bool {
     match ty {
         Type::Basic(basic) => {
             let s: &str = &str(basic.name).to_string();
-            match s {
-                "uchar" | "char" | "u8" | "u16" | "u32" | "u64" | "i64" | "i32" | "i16" | "i8"
-                | "isize" | "usize" => true,
-                _ => false,
-            }
+            matches!(s, "uchar" | "char" | "u8" | "u16" | "u32" | "u64" | "i64" | "i32" | "i16" | "i8"
+                | "isize" | "usize")
         }
 
         _ => false,
@@ -45,10 +42,7 @@ pub fn ty_is_any_float(ty: &Type) -> bool {
     match ty {
         Type::Basic(basic) => {
             let s: &str = &str(basic.name).to_string();
-            match s {
-                "f32" | "f64" => true,
-                _ => false,
-            }
+            matches!(s, "f32" | "f64")
         }
 
         _ => false,
@@ -160,7 +154,7 @@ impl<'a> SemCheck<'a> {
         }
 
         for (k, v) in self.types.iter() {
-            self.ctx.types.insert(k.clone(), v.clone());
+            self.ctx.types.insert(*k, v.clone());
         }
     }
 
@@ -169,7 +163,7 @@ impl<'a> SemCheck<'a> {
 
         for elem in elems.iter() {
             if let Elem::Import(import) = elem {
-                let import = if self.ctx.file.root.len() == 0 {
+                let import = if self.ctx.file.root.is_empty() {
                     import.to_owned()
                 } else {
                     format!("{}/{}", self.ctx.file.root, import)
@@ -181,7 +175,7 @@ impl<'a> SemCheck<'a> {
                     path: import.clone(),
                     root: std::path::Path::new(&import)
                         .parent()
-                        .unwrap_or(&std::path::Path::new(&import))
+                        .unwrap_or(std::path::Path::new(&import))
                         .to_str()
                         .unwrap()
                         .to_owned(),
@@ -190,7 +184,7 @@ impl<'a> SemCheck<'a> {
                 use lexer::reader::Reader;
 
                 let reader =
-                    Reader::from_file(&import).expect(&format!("File {} not found", import));
+                    Reader::from_file(&import).unwrap_or_else(|_| panic!("File {} not found", import));
                 let mut parser = Parser::new(reader, &mut file);
                 parser.parse().expect("Error");
 
@@ -224,7 +218,7 @@ impl<'a> SemCheck<'a> {
                 for elem in ctx.file.elems.iter() {
                     match elem {
                         Elem::Func(f) => {
-                            let funs = self.imported_funs.get(&f.name).clone();
+                            let funs = self.imported_funs.get(&f.name);
                             if funs.is_none() {
                                 let funs = vec![f.clone()];
                                 self.imported_funs.insert(f.name, funs);
@@ -254,15 +248,15 @@ impl<'a> SemCheck<'a> {
                             self.ctx.file.elems.insert(0, Elem::Link(*name));
                         }
                         Elem::Const(c) => {
-                            if !self.imported.contains_key(&c.name) {
-                                self.imported.insert(c.name, Elem::Const(c.clone()));
+                            if let std::collections::hash_map::Entry::Vacant(e) = self.imported.entry(c.name) {
+                                e.insert(Elem::Const(c.clone()));
                                 self.ctx.file.elems.push(Elem::Const(c.clone()));
                             }
                         }
                         Elem::Struct(_s) => (),
                         Elem::Global(glob) => {
-                            if !self.imported.contains_key(&glob.name) {
-                                self.imported.insert(glob.name, Elem::Global(glob.clone()));
+                            if let std::collections::hash_map::Entry::Vacant(e) = self.imported.entry(glob.name) {
+                                e.insert(Elem::Global(glob.clone()));
                                 self.ctx.file.elems.push(Elem::Global(glob.clone()));
                             }
                         }
@@ -377,8 +371,8 @@ impl<'a> SemCheck<'a> {
                         variadic: func.variadic,
                     };
 
-                    if !self.signatures.contains_key(&func.name) {
-                        self.signatures.insert(func.name, vec![sig.clone()]);
+                    if let std::collections::hash_map::Entry::Vacant(e) = self.signatures.entry(func.name) {
+                        e.insert(vec![sig.clone()]);
                     } else {
                         let sigs = self.signatures.get_mut(&func.name).unwrap();
                         sigs.push(sig.clone());
@@ -477,7 +471,7 @@ impl<'a> SemCheck<'a> {
                 let mut v = v.clone();
                 v.subtype = Box::new(self.infer_type(&v.subtype));
 
-                return Type::Vector(v);
+                Type::Vector(v)
             }
             Type::Struct(struc) => {
                 if self.structures.borrow().contains_key(&struc.name) {
@@ -514,7 +508,7 @@ impl<'a> SemCheck<'a> {
             }
             Type::Basic(basic) => {
                 if let Some(ty) = self.aliases.get(&basic.name) {
-                    return self.infer_type(&ty);
+                    return self.infer_type(ty);
                 }
 
                 if self.structures.borrow().contains_key(&basic.name) {

@@ -374,17 +374,11 @@ impl Type {
     }
 
     pub fn is_vec(&self) -> bool {
-        match self {
-            Type::Vector(_) => true,
-            _ => false,
-        }
+        matches!(self, Type::Vector(_))
     }
 
     pub fn is_ptr(&self) -> bool {
-        match self {
-            Type::Ptr(_) => true,
-            _ => false,
-        }
+        matches!(self, Type::Ptr(_))
     }
 
     pub fn to_ptr(&self) -> Option<&TypePtr> {
@@ -431,24 +425,15 @@ impl Type {
     }
 
     pub fn is_void(&self) -> bool {
-        match self {
-            Type::Void(_) => true,
-            _ => false,
-        }
+        matches!(self, Type::Void(_))
     }
 
     pub fn is_array(&self) -> bool {
-        match self {
-            Type::Array(_) => true,
-            _ => false,
-        }
+        matches!(self, Type::Array(_))
     }
 
     pub fn is_basic(&self) -> bool {
-        match self {
-            Type::Basic(_) => true,
-            _ => false,
-        }
+        matches!(self, Type::Basic(_))
     }
 
     pub fn pos(&self) -> Position {
@@ -554,7 +539,7 @@ impl Function {
             match &mut s.kind {
                 StmtKind::CompTime(s) => replace_stmt(s, id, to),
                 StmtKind::CFor(var, cond, then, body) => {
-                    if replace_stmt(var, id, to.clone()) == true {
+                    if replace_stmt(var, id, to.clone()) {
                         return true;
                     }
                     if cond.id == id {
@@ -565,7 +550,7 @@ impl Function {
                         then.kind = to.kind.clone();
                         return true;
                     }
-                    if replace_stmt(body, id, to.clone()) == true {
+                    if replace_stmt(body, id, to.clone()) {
                         return true;
                     }
                     false
@@ -608,11 +593,7 @@ impl Function {
                     }
                     if other.is_some() {
                         let other = other.as_mut().unwrap();
-                        if replace_stmt(other, id, to.clone()) {
-                            return true;
-                        } else {
-                            return false;
-                        }
+                        return replace_stmt(other, id, to.clone())
                     }
                     false
                 }
@@ -621,11 +602,7 @@ impl Function {
                         *expr = Box::new(to);
                         return true;
                     }
-                    if replace_stmt(then, id, to.clone()) {
-                        true
-                    } else {
-                        false
-                    }
+                    replace_stmt(then, id, to.clone())
                 }
                 StmtKind::Loop(body) => replace_stmt(body, id, to.clone()),
                 StmtKind::Var(_, _, _, expr) => {
@@ -671,10 +648,7 @@ pub struct Expr {
 
 impl Expr {
     pub fn is_deref(&self) -> bool {
-        match &self.kind {
-            ExprKind::Deref(_) => true,
-            _ => false,
-        }
+        matches!(&self.kind, ExprKind::Deref(_))
     }
 
     pub fn is_bool(&self, val: bool) -> bool {
@@ -765,10 +739,7 @@ pub enum StmtKind {
 
 impl StmtKind {
     pub fn is_if(&self) -> bool {
-        match self {
-            StmtKind::If(_, _, _) => true,
-            _ => false,
-        }
+        matches!(self, StmtKind::If(_, _, _))
     }
 }
 

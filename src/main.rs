@@ -99,7 +99,7 @@ fn main() -> Result<(), MsgWithPos> {
         root: cli
             .file
             .parent()
-            .unwrap_or(&std::path::Path::new(""))
+            .unwrap_or(std::path::Path::new(""))
             .to_str()
             .unwrap()
             .to_owned(),
