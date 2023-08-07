@@ -11,11 +11,11 @@ impl Translator {
     pub fn new(ctx: Context) -> Translator {
         Translator {
             ctx,
-            code:
-                "#include <inttypes.h>
+            code: "#include <inttypes.h>
 #include <stddef.h>
 
-".to_string(),
+"
+            .to_string(),
         }
     }
 
@@ -182,8 +182,7 @@ impl Translator {
                 self.code.push_str("{\n");
                 for (i, arg) in args.iter().enumerate() {
                     let arg: &StructArg = arg;
-                    self.code
-                        .push_str(&format!(".{} = ", str(arg.name)));
+                    self.code.push_str(&format!(".{} = ", str(arg.name)));
                     self.gen_expr(&arg.expr);
                     if i != args.len() - 1 {
                         self.code.push_str(",\n");
@@ -252,8 +251,7 @@ impl Translator {
                     .code
                     .push_str(&format!("struct {};\n", str(struct_.name))),
                 Elem::ConstExpr { name, expr, .. } => {
-                    self.code
-                        .push_str(&format!("#define {} ", str(*name)));
+                    self.code.push_str(&format!("#define {} ", str(*name)));
                     self.gen_expr(expr);
                     self.code.push('\n');
                 }
@@ -268,8 +266,7 @@ impl Translator {
                     self.code.push_str("extern \"C\" {\n");
                 }
                 self.type_to_c(&f.ret);
-                self.code
-                    .push_str(&format!(" {} (", str(f.name)));
+                self.code.push_str(&format!(" {} (", str(f.name)));
                 if f.this.is_some() {
                     let (name, ty) = f.this.as_ref().unwrap();
 
@@ -295,15 +292,13 @@ impl Translator {
         }
         for elem in elems.iter() {
             if let Elem::Struct(s) = elem {
-                self.code
-                    .push_str(&format!("struct {} {{\n", str(s.name)));
+                self.code.push_str(&format!("struct {} {{\n", str(s.name)));
                 let s: &Struct = s;
                 for field in s.fields.iter() {
                     let f: &StructField = field;
 
                     self.type_to_c(&f.data_type);
-                    self.code
-                        .push_str(&format!(" {};\n", str(f.name)));
+                    self.code.push_str(&format!(" {};\n", str(f.name)));
                 }
                 self.code.push_str("};\n");
             }
@@ -314,8 +309,7 @@ impl Translator {
                     let c: &Const = c;
                     self.code.push_str("const ");
                     self.type_to_c(&c.typ);
-                    self.code
-                        .push_str(&format!(" {} = ", str(c.name)));
+                    self.code.push_str(&format!(" {} = ", str(c.name)));
                     self.gen_expr(&c.expr);
                     self.code.push_str(";\n");
                 }
@@ -323,8 +317,7 @@ impl Translator {
                     if f.body.is_some() {
                         let f: &Function = f;
                         self.type_to_c(&f.ret);
-                        self.code
-                            .push_str(&format!(" {} (", str(f.name)));
+                        self.code.push_str(&format!(" {} (", str(f.name)));
                         if f.this.is_some() {
                             let (name, ty) = f.this.as_ref().unwrap();
 

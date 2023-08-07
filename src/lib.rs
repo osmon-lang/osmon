@@ -153,7 +153,7 @@ impl Context {
         use syntax::ast::Elem;
         for elem in self.file.elems.clone().iter() {
             if let Elem::Import(path) = elem {
-                self.import(&path);
+                self.import(path);
             }
         }
     }

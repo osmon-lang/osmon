@@ -1,104 +1,91 @@
-extern crate havo;
-extern crate structopt;
-
+use clap::{Parser as ClapParser, ValueEnum};
 use havo::{
     err::MsgWithPos,
-    gccjit::Codegen,
+    gccjit::Codegen as GccJITCodegen,
     // optimize::const_eval,
     semantic::*,
-    syntax::{ast::*, lexer::reader::Reader, parser::*},
+    syntax::{ast::*, lexer::reader::Reader, parser::Parser},
     Context,
 };
-use structopt::StructOpt;
-
+use std::fmt::Display;
 use std::path::PathBuf;
 
-#[derive(Debug, StructOpt)]
+#[derive(ValueEnum, Copy, Clone, Debug, PartialEq, Eq)]
 pub enum Backend {
-    #[structopt(help = "Default backend, allows JIT and AOT compilation")]
+    #[value(help = "Default backend, allows JIT and AOT compilation")]
     GccJIT,
-    #[structopt(help = "C++ backend,still W.I.P")]
+    #[value(help = "C++ backend,still W.I.P")]
     CPP,
 }
 
-impl Backend {
-    pub const fn gccjit() -> &'static str {
-        "gccjit"
-    }
-
-    pub const fn cpp() -> &'static str {
-        "cpp"
-    }
-}
-
-use std::str::FromStr;
-
-impl FromStr for Backend {
-    type Err = &'static str;
-    fn from_str(s: &str) -> Result<Backend, &'static str> {
-        let s: &str = &s.to_lowercase();
-        match s {
-            "gccjit" => Ok(Backend::GccJIT),
-            "cpp" | "c++" => Ok(Backend::CPP),
-            _ => Err("expected gccjit,cpp or cranelift backend"),
+impl Display for Backend {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Backend::GccJIT => write!(f, "gcc-jit"),
+            Backend::CPP => write!(f, "cpp"),
         }
     }
 }
 
-#[derive(StructOpt, Debug)]
-#[structopt(name = "havo", about = "Havo kompilyatori")]
-pub struct Options {
-    #[structopt(parse(from_os_str))]
+#[derive(Debug, ClapParser)]
+#[command(name = "havo")]
+#[command(about = "The Havo Compiler", long_about = None)]
+pub struct Cli {
+    #[arg(required = true)]
     pub file: PathBuf,
-    #[structopt(
-        short = "O",
+
+    #[arg(
+        short = 'O',
         long = "opt-level",
         default_value = "2",
         help = "Set optimization level"
     )]
     pub opt_level: u8,
-    #[structopt(long = "jit", help = "Use JIT compilation instead of AOT compilation")]
+
+    #[arg(long = "jit", help = "Use JIT compilation instead of AOT compilation")]
     pub jit: bool,
-    #[structopt(long = "emit-obj", help = "Output object file")]
+
+    #[arg(long = "emit-obj", help = "Output object file")]
     pub emit_obj: bool,
-    #[structopt(long = "emit-asm", help = "Print assembly to stdout")]
+
+    #[arg(long = "emit-asm", help = "cPrint assembly to stdout")]
     pub emit_asm: bool,
-    #[structopt(
-        short = "o",
-        long = "output",
-        parse(from_os_str),
-        help = "Set output filename"
-    )]
+
+    #[arg(short = 'o', long = "output", help = "Set output filename")]
     pub output: Option<PathBuf>,
-    #[structopt(long = "shared", help = "Output shared library (.dll or .so)")]
+
+    #[arg(long = "shared", help = "Output shared library (.dll or .so)")]
     pub shared: bool,
-    #[structopt(
+
+    #[arg(
         long = "emit-gimple",
         help = "Dump GIMPLE to stdout if gccjit backend used"
     )]
     pub emit_gimple: bool,
-    #[structopt(
+
+    #[arg(
         long = "backend",
-        raw(
-            possible_values = "&[\"gccjit\",\"cranelift\",\"cpp\"]",
-            case_insensitive = "true",
-            default_value = "\"gccjit\""
-        ),
-        help = "Select backend"
+        default_value_t = Backend::GccJIT,
+        help = "Select backend",
     )]
     pub backend: Backend,
-    #[structopt(short = "l", long = "link")]
+
+    #[arg(short = 'l', long = "link")]
     pub libraries_link: Vec<String>,
-    #[structopt(short = "f")]
+
+    #[arg(short = 'f')]
     pub gcc_opts: Vec<String>,
-    #[structopt(
+
+    #[arg(
         long = "consteval",
         help = "Enables constant folding and const function evaluating"
     )]
     pub const_eval: bool,
-    #[structopt(long = "print-ast", help = "Print program")]
+
+    #[arg(long = "print-ast", help = "Print program")]
     pub print_ast: bool,
-    #[structopt(
+
+    #[arg(
         long = "aggressive-eval",
         help = "try to evaluate normal (not constexpr) functions too"
     )]
@@ -106,9 +93,10 @@ pub struct Options {
 }
 
 fn main() -> Result<(), MsgWithPos> {
-    let opts: Options = Options::from_args();
+    let cli: Cli = Cli::parse();
+
     let mut file = File {
-        root: opts
+        root: cli
             .file
             .parent()
             .unwrap_or(&std::path::Path::new(""))
@@ -116,11 +104,11 @@ fn main() -> Result<(), MsgWithPos> {
             .unwrap()
             .to_owned(),
         src: String::new(),
-        path: opts.file.to_str().unwrap().to_owned(),
+        path: cli.file.to_str().unwrap().to_owned(),
         elems: vec![],
     };
 
-    let reader = Reader::from_file(opts.file.to_str().unwrap()).unwrap();
+    let reader = Reader::from_file(cli.file.to_str().unwrap()).unwrap();
 
     let mut parser = Parser::new(reader, &mut file);
 
@@ -131,17 +119,17 @@ fn main() -> Result<(), MsgWithPos> {
     }
 
     let mut ctx = Context::new(file);
-    ctx.shared = opts.shared;
-    ctx.emit_asm = opts.emit_asm;
-    ctx.emit_obj = opts.emit_obj;
-    ctx.jit = opts.jit;
-    ctx.output = opts
+    ctx.shared = cli.shared;
+    ctx.emit_asm = cli.emit_asm;
+    ctx.emit_obj = cli.emit_obj;
+    ctx.jit = cli.jit;
+    ctx.output = cli
         .output
         .map_or(String::new(), |e: PathBuf| e.to_str().unwrap().to_owned());
-    ctx.opt = opts.opt_level;
-    ctx.gimple = opts.emit_gimple;
+    ctx.opt = cli.opt_level;
+    ctx.gimple = cli.emit_gimple;
     ctx.file.elems.extend(
-        opts.libraries_link
+        cli.libraries_link
             .iter()
             .map(|name| Elem::Link(havo::intern(name))),
     );
@@ -149,25 +137,25 @@ fn main() -> Result<(), MsgWithPos> {
 
     semantic.run();
 
-    // use havo::eval::EvalCtx;
-    // let mut eval = EvalCtx::new(&mut ctx);
-    // eval.run();
+    use havo::eval::EvalCtx;
+    let mut eval = EvalCtx::new(&mut ctx);
+    eval.run();
 
-    if opts.print_ast {
+    if cli.print_ast {
         for elem in ctx.file.elems.iter() {
             println!("{}", elem);
         }
     }
 
-    match opts.backend {
+    match cli.backend {
         Backend::CPP => {
             use havo::ast2cpp::Translator;
             let mut translator = Translator::new(ctx);
             translator.run();
         }
         Backend::GccJIT => {
-            let mut cgen = Codegen::new(&mut ctx, "HavoModule");
-            for opt in opts.gcc_opts.iter() {
+            let mut cgen = GccJITCodegen::new(&mut ctx, "HavoModule");
+            for opt in cli.gcc_opts.iter() {
                 cgen.ctx.add_command_line_option(opt);
             }
             cgen.compile();

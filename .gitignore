@@ -1,5 +1,18 @@
 target
 Cargo.lock
+
+# Compiled files
 a.out
 output.cc
 output
+
+# Compiled .so files
+lib/havo_cstd.o
+lib/libhavostd.so
+
+# Uncompiled libhavostd
+lib/havo_cstd.c
+std/libhavostd.so
+
+# Copy of the standard library
+stage_1/src/std
