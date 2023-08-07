@@ -16,7 +16,7 @@ impl<'a> FunctionBuilder<'a> {
         }
     }
 
-    fn cfg<'b>(&'b mut self) -> &'b mut CFG {
+    fn cfg(&mut self) -> &mut CFG {
         &mut self.func.cfg
     }
 
@@ -118,7 +118,7 @@ impl<'a> FunctionBuilder<'a> {
     }
 
     pub fn use_var(&mut self, var: u32) -> Value {
-        self.variables.get(&var).expect("Undefined var").clone()
+        *self.variables.get(&var).expect("Undefined var")
     }
 
     pub fn return_(&mut self, val: Value) {

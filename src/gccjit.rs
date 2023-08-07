@@ -215,7 +215,7 @@ impl<'a> Codegen<'a> {
                 if self.structures.contains_key(&struct_.name) {
                     self.structures
                         .get(&struct_.name)
-                        .expect(&format!("Struct {} not found", str(struct_.name)))
+                        .unwrap_or_else(|| panic!("Struct {} not found", str(struct_.name)))
                         .ty
                 } else {
                     let mut fields = vec![];
@@ -239,7 +239,7 @@ impl<'a> Codegen<'a> {
                             .new_union_type(None, str(struct_.name).to_string(), &fields)
                     } else {
                         self.ctx
-                            .new_struct_type(None, &str(struct_.name).to_string(), &fields)
+                            .new_struct_type(None, str(struct_.name).to_string(), &fields)
                             .as_type()
                     };
                     self.structures.insert(

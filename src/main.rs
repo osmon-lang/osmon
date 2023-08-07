@@ -1,3 +1,5 @@
+#![allow(clippy::result_large_err)]
+
 use clap::{Parser as ClapParser, ValueEnum};
 use havo::{
     err::MsgWithPos,

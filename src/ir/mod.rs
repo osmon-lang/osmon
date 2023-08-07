@@ -39,17 +39,17 @@ impl fmt::Display for Function {
             }
         }
 
-        write!(f, ") {} {{\n", self.ret)?;
+        writeln!(f, ") {} {{", self.ret)?;
         for (id, block) in self.cfg.blocks.iter() {
-            write!(f, "{}:\n", id)?;
+            writeln!(f, "{}:", id)?;
             let block: &BlockData = block;
 
             for (id, ins) in block.insts.iter() {
                 if ins.without_result() {
-                    write!(f, "\t{}\n", ins)?;
+                    writeln!(f, "\t{}", ins)?;
                 } else {
-                    let val = self.cfg.results.get(id).unwrap().clone();
-                    write!(f, "\t{} = {}\n", val, ins)?;
+                    let val = *self.cfg.results.get(id).unwrap();
+                    writeln!(f, "\t{} = {}", val, ins)?;
                 }
             }
         }
@@ -260,12 +260,7 @@ pub enum InstructionData {
 
 impl InstructionData {
     pub fn without_result(&self) -> bool {
-        match self {
-            InstructionData::Store(_, _, _) => true,
-            InstructionData::Branch(_, _, _) => true,
-            InstructionData::Return(_, _) => true,
-            _ => false,
-        }
+        matches!(self, InstructionData::Store(_, _, _) | InstructionData::Branch(_, _, _) | InstructionData::Return(_, _))
     }
 }
 
@@ -323,6 +318,15 @@ pub struct BlockData {
     pub terminated: bool,
 }
 
+impl Default for BlockData {
+    fn default() -> Self {
+        Self {
+            insts: HashMap::new(),
+            terminated: false,
+        }
+    }
+}
+
 impl BlockData {
     pub fn new() -> BlockData {
         BlockData {
@@ -336,6 +340,16 @@ pub struct CFG {
     results: HashMap<Inst, Value>,
     blocks: HashMap<Block, BlockData>,
     cur_block: Option<Block>,
+}
+
+impl Default for CFG {
+    fn default() -> Self {
+        Self {
+            results: HashMap::new(),
+            blocks: HashMap::new(),
+            cur_block: None,
+        }
+    }
 }
 
 impl CFG {

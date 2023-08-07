@@ -133,11 +133,7 @@ fn ty_size(ty: &Type) -> Option<usize> {
         }
         Type::Array(array) => {
             if array.len.is_some() {
-                if let Some(size) = ty_size(&array.subtype) {
-                    Some(size * array.len.unwrap())
-                } else {
-                    None
-                }
+                ty_size(&array.subtype).map(|size| size * array.len.unwrap())
             } else {
                 Some(std::mem::size_of::<*const u8>())
             }
@@ -206,8 +202,8 @@ impl<'a> ConstEval<'a> {
     /// If values of lhs and rhs known at compile time evaluates binary
     /// operation
     fn eval_binop(&mut self, op: &str, lhs: &Expr, rhs: &Expr) -> Rc<RefCell<Const>> {
-        let c1 = self.eval(&lhs);
-        let c2 = self.eval(&rhs);
+        let c1 = self.eval(lhs);
+        let c2 = self.eval(rhs);
 
         if c1.borrow().is_none() || c2.borrow().is_none() {
             return Rc::new(RefCell::new(Const::None));
