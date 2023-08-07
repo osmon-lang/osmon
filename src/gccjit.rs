@@ -91,7 +91,7 @@ impl<'a> Codegen<'a> {
     /// Get type size for sizeof expression
     pub fn ty_size(&self, ty: &Type) -> usize {
         match ty {
-            Type::Vector(v) => return self.ty_size(&v.subtype) * v.size,
+            Type::Vector(v) => self.ty_size(&v.subtype) * v.size,
             Type::Void(_) => 0,
             Type::Basic(basic) => {
                 let name: &str = &str(basic.name);
@@ -122,7 +122,6 @@ impl<'a> Codegen<'a> {
                         } else if let Some(ty) = self
                             .aliases
                             .get(&crate::syntax::interner::intern(s))
-                            .clone()
                         {
                             self.ty_size(ty)
                         } else {
@@ -144,7 +143,7 @@ impl<'a> Codegen<'a> {
             }
             Type::Array(array) => {
                 if array.len.is_some() {
-                    self.ty_size(&array.subtype) * array.len.unwrap() as usize
+                    self.ty_size(&array.subtype) * array.len.unwrap()
                 } else {
                     8
                 }
@@ -273,11 +272,7 @@ impl<'a> Codegen<'a> {
         let _ = self.get_id_type(from.id);
         let do_cast = match type_ {
             Type::Basic(basic) => {
-                if self.structures.contains_key(&basic.name) {
-                    false
-                } else {
-                    true
-                }
+                !self.structures.contains_key(&basic.name)
             }
             Type::Struct(_) => false,
             Type::Ptr(_) => true,
@@ -314,8 +309,8 @@ impl<'a> Codegen<'a> {
                 continue;
             }
 
-            if function.f.params.len() == 0
-                && params.len() == 0
+            if function.f.params.is_empty()
+                && params.is_empty()
                 && function.this_ast.is_none()
                 && this.is_none()
             {
@@ -332,7 +327,7 @@ impl<'a> Codegen<'a> {
                         this.make_ptr()
                     };
 
-                    if &*ty != &this {
+                    if ty != &this {
                         continue;
                     } else {
                         let mut sig_params = vec![];
@@ -810,11 +805,11 @@ impl<'a> Codegen<'a> {
                 let func: CFunction = self.cur_func.unwrap();
 
                 let loop_cond: Block =
-                    func.new_block(&format!("for_cond:{}", self.block_name_new()));
+                    func.new_block(format!("for_cond:{}", self.block_name_new()));
                 let loop_body: Block =
-                    func.new_block(&format!("for_loop_body:{}", self.block_name_new()));
+                    func.new_block(format!("for_loop_body:{}", self.block_name_new()));
                 let after_loop: Block =
-                    func.new_block(&format!("after_for:{}", self.block_name_new()));
+                    func.new_block(format!("after_for:{}", self.block_name_new()));
                 //let for_body: Block =
                 // func.new_block(&format!("for_body:{}",self.block_name_new()));
                 self.break_blocks.push_back(after_loop);
@@ -1123,11 +1118,7 @@ impl<'a> Codegen<'a> {
 
                 let var = if let Some(functions) = self.functions.get(&name.name()) {
                     let functions = functions.clone();
-                    let ty = if let Some(this) = this {
-                        Some(self.get_id_type(this.id))
-                    } else {
-                        None
-                    };
+                    let ty = this.as_ref().map(|this| self.get_id_type(this.id));
                     let val = self.search_for_func(&param_types, ty.as_ref(), &functions);
 
                     if val.is_none() {
@@ -1484,9 +1475,7 @@ impl<'a> Codegen<'a> {
                         fields: cfields,
                         types,
                     };
-                    if !self.structures.contains_key(&s.name) {
-                        self.structures.insert(s.name, cstruct);
-                    }
+                    self.structures.entry(s.name).or_insert(cstruct);
                 }
                 Elem::Link(name) => {
                     self.ctx.add_driver_option(&format!("-l{}", str(*name)));
@@ -1502,290 +1491,280 @@ impl<'a> Codegen<'a> {
         }
 
         for elem in elems.iter_mut() {
-            match elem {
-                Elem::Func(func) => {
-                    let func: &mut Function = func;
-                    let linkage = if func.external {
-                        FunctionType::Extern
-                    } else if func.static_ || !func.public {
-                        FunctionType::Internal
-                    } else if func.inline {
-                        FunctionType::AlwaysInline
+            if let Elem::Func(func) = elem {
+                let func: &mut Function = func;
+                let linkage = if func.external {
+                    FunctionType::Extern
+                } else if func.static_ || !func.public {
+                    FunctionType::Internal
+                } else if func.inline {
+                    FunctionType::AlwaysInline
+                } else {
+                    FunctionType::Exported
+                };
+
+                if func.external || func.internal {
+                    let mut params = vec![];
+
+                    for (name, ty) in func.params.iter() {
+                        let tyi = self.ty_to_ctype(ty);
+                        params.push(self.ctx.new_parameter(
+                            Some(gccloc_from_loc(&self.ctx, &ty.pos())),
+                            tyi,
+                            &str(*name).to_string(),
+                        ));
+                    }
+
+                    let f = if func.internal {
+                        self.ctx.get_builtin_function(&str(func.name).to_string())
                     } else {
-                        FunctionType::Exported
-                    };
-
-                    if func.external || func.internal {
-                        let mut params = vec![];
-
-                        for (name, ty) in func.params.iter() {
-                            let tyi = self.ty_to_ctype(ty);
-                            params.push(self.ctx.new_parameter(
-                                Some(gccloc_from_loc(&self.ctx, &ty.pos())),
-                                tyi,
-                                &str(*name).to_string(),
-                            ));
-                        }
-
-                        let f = if func.internal {
-                            self.ctx.get_builtin_function(&str(func.name).to_string())
-                        } else {
-                            let ret = self.ty_to_ctype(&func.ret);
-                            self.ctx.new_function(
-                                None,
-                                linkage,
-                                ret,
-                                &params,
-                                &str(func.name).to_string(),
-                                func.variadic,
-                            )
-                        };
-
-                        let unit = FunctionUnit {
-                            f: func.clone(),
-                            c: f,
-                            this_ast: None,
-                            this_ir: None,
-                            irname: str(func.name).to_string(),
-                        };
-
-                        self.external_functions.insert(func.name, unit);
-                    } else {
-                        let mut params = vec![];
-
-                        for (name, ty) in func.params.iter() {
-                            let ty = self.ty_to_ctype(ty);
-                            params.push(self.ctx.new_parameter(None, ty, &str(*name).to_string()));
-                        }
-                        if func.this.is_some() {
-                            let (name, ty) = func.this.as_ref().unwrap();
-                            let ty = self.ty_to_ctype(ty);
-                            params.push(self.ctx.new_parameter(None, ty, &str(*name).to_string()));
-                        }
-                        let name_str: &str = &str(func.name).to_string();
-                        let id = self.fun_id;
-
-                        func.ir_temp_id = id;
-                        let name = if name_str == "main" {
-                            "main".to_owned()
-                        } else {
-                            fn ty_to_n(ty: &Type) -> String {
-                                let mut s = String::new();
-
-                                match ty {
-                                    Type::Vector(v) => {
-                                        s.push_str(&format!("vec{}{}", v.subtype, v.size))
-                                    }
-                                    Type::Basic(b) => s.push_str(&str(b.name)),
-                                    Type::Ptr(ptr) => {
-                                        s.push_str("ptr");
-                                        s.push_str(&ty_to_n(&ptr.subtype));
-                                    }
-                                    Type::Func(_) => {
-                                        s.push_str(&format!("{}", ty));
-                                    }
-                                    Type::Struct(st) => s.push_str(&format!("{}", str(st.name))),
-                                    Type::Void(_) => s.push_str("v"),
-                                    Type::Array(array) => {
-                                        s.push_str("ptr");
-                                        s.push_str(&ty_to_n(&array.subtype));
-                                    }
-                                }
-
-                                s
-                            }
-                            let mut name = str(func.name).to_string();
-                            if func.this.is_some() {
-                                name.push_str("this");
-                                let this = *func.this.clone().unwrap().1.clone();
-                                name.push_str(&ty_to_n(&this));
-                            }
-                            for (_, param) in func.params.iter() {
-                                name.push_str(&ty_to_n(param));
-                            }
-                            name
-                        };
-
                         let ret = self.ty_to_ctype(&func.ret);
-
-                        let f = self.ctx.new_function(
+                        self.ctx.new_function(
                             None,
                             linkage,
                             ret,
                             &params,
-                            &name,
+                            &str(func.name).to_string(),
                             func.variadic,
-                        );
+                        )
+                    };
 
-                        let (this_ast, this_ir) = if let Some((_, ty)) = &func.this {
-                            let ty = *ty.clone();
-                            let irty = self.ty_to_ctype(&ty);
+                    let unit = FunctionUnit {
+                        f: func.clone(),
+                        c: f,
+                        this_ast: None,
+                        this_ir: None,
+                        irname: str(func.name).to_string(),
+                    };
 
-                            (Some(ty), Some(irty))
-                        } else {
-                            (None, None)
-                        };
+                    self.external_functions.insert(func.name, unit);
+                } else {
+                    let mut params = vec![];
 
-                        if let Some(functions) = self.functions.get_mut(&func.name) {
-                            let mut found = false;
-                            for fun in functions.iter_mut() {
-                                if fun.f.name == func.name
-                                    && fun.f.params == func.params
-                                    && fun.f.ret == func.ret
-                                    && fun.f.variadic == func.variadic
-                                    && fun.f.this == func.this
-                                {
-                                    *fun = FunctionUnit {
-                                        f: func.clone(),
-                                        c: f,
-                                        this_ast: this_ast.clone(),
-                                        this_ir,
-                                        irname: name.clone(),
-                                    };
-                                    self.fun_id += 1;
-                                    found = true;
+                    for (name, ty) in func.params.iter() {
+                        let ty = self.ty_to_ctype(ty);
+                        params.push(self.ctx.new_parameter(None, ty, &str(*name).to_string()));
+                    }
+                    if func.this.is_some() {
+                        let (name, ty) = func.this.as_ref().unwrap();
+                        let ty = self.ty_to_ctype(ty);
+                        params.push(self.ctx.new_parameter(None, ty, &str(*name).to_string()));
+                    }
+                    let name_str: &str = &str(func.name).to_string();
+                    let id = self.fun_id;
 
-                                    break;
+                    func.ir_temp_id = id;
+                    let name = if name_str == "main" {
+                        "main".to_owned()
+                    } else {
+                        fn ty_to_n(ty: &Type) -> String {
+                            let mut s = String::new();
+
+                            match ty {
+                                Type::Vector(v) => {
+                                    s.push_str(&format!("vec{}{}", v.subtype, v.size))
+                                }
+                                Type::Basic(b) => s.push_str(&str(b.name)),
+                                Type::Ptr(ptr) => {
+                                    s.push_str("ptr");
+                                    s.push_str(&ty_to_n(&ptr.subtype));
+                                }
+                                Type::Func(_) => {
+                                    s.push_str(&format!("{}", ty));
+                                }
+                                Type::Struct(st) => s.push_str(&format!("{}", str(st.name))),
+                                Type::Void(_) => s.push('v'),
+                                Type::Array(array) => {
+                                    s.push_str("ptr");
+                                    s.push_str(&ty_to_n(&array.subtype));
                                 }
                             }
-                            if !found {
-                                functions.push(FunctionUnit {
+
+                            s
+                        }
+                        let mut name = str(func.name).to_string();
+                        if func.this.is_some() {
+                            name.push_str("this");
+                            let this = *func.this.clone().unwrap().1.clone();
+                            name.push_str(&ty_to_n(&this));
+                        }
+                        for (_, param) in func.params.iter() {
+                            name.push_str(&ty_to_n(param));
+                        }
+                        name
+                    };
+
+                    let ret = self.ty_to_ctype(&func.ret);
+
+                    let f = self.ctx.new_function(
+                        None,
+                        linkage,
+                        ret,
+                        &params,
+                        &name,
+                        func.variadic,
+                    );
+
+                    let (this_ast, this_ir) = if let Some((_, ty)) = &func.this {
+                        let ty = *ty.clone();
+                        let irty = self.ty_to_ctype(&ty);
+
+                        (Some(ty), Some(irty))
+                    } else {
+                        (None, None)
+                    };
+
+                    if let Some(functions) = self.functions.get_mut(&func.name) {
+                        let mut found = false;
+                        for fun in functions.iter_mut() {
+                            if fun.f.name == func.name
+                                && fun.f.params == func.params
+                                && fun.f.ret == func.ret
+                                && fun.f.variadic == func.variadic
+                                && fun.f.this == func.this
+                            {
+                                *fun = FunctionUnit {
                                     f: func.clone(),
                                     c: f,
                                     this_ast: this_ast.clone(),
                                     this_ir,
-                                    irname: name,
-                                });
+                                    irname: name.clone(),
+                                };
+                                self.fun_id += 1;
+                                found = true;
+
+                                break;
                             }
-                        } else {
-                            self.functions.insert(
-                                func.name,
-                                vec![FunctionUnit {
-                                    f: func.clone(),
-                                    c: f,
-                                    this_ast,
-                                    this_ir,
-                                    irname: name,
-                                }],
-                            );
                         }
-                        self.fun_id += 1;
+                        if !found {
+                            functions.push(FunctionUnit {
+                                f: func.clone(),
+                                c: f,
+                                this_ast: this_ast.clone(),
+                                this_ir,
+                                irname: name,
+                            });
+                        }
+                    } else {
+                        self.functions.insert(
+                            func.name,
+                            vec![FunctionUnit {
+                                f: func.clone(),
+                                c: f,
+                                this_ast,
+                                this_ir,
+                                irname: name,
+                            }],
+                        );
                     }
+                    self.fun_id += 1;
                 }
-                _ => (),
             }
         }
         for elem in elems.iter() {
-            match elem {
-                Elem::Global(global) => {
-                    let global: &crate::syntax::ast::Global = global;
-                    let cty = self.ty_to_ctype(&global.typ);
-                    let name: &str = &str(global.name).to_string();
-                    let lval = if global.external {
-                        self.ctx.new_global(None, GlobalKind::External, cty, name)
-                    } else if global.public {
-                        self.ctx.new_global(None, GlobalKind::Exported, cty, name)
-                    } else {
-                        self.ctx.new_global(None, GlobalKind::Internal, cty, name)
-                    };
+            if let Elem::Global(global) = elem {
+                let global: &crate::syntax::ast::Global = global;
+                let cty = self.ty_to_ctype(&global.typ);
+                let name: &str = &str(global.name).to_string();
+                let lval = if global.external {
+                    self.ctx.new_global(None, GlobalKind::External, cty, name)
+                } else if global.public {
+                    self.ctx.new_global(None, GlobalKind::Exported, cty, name)
+                } else {
+                    self.ctx.new_global(None, GlobalKind::Internal, cty, name)
+                };
 
-                    let varinfo = VarInfo {
-                        lval,
-                        cty,
-                        ty: *global.typ.clone(),
-                    };
+                let varinfo = VarInfo {
+                    lval,
+                    cty,
+                    ty: *global.typ.clone(),
+                };
 
-                    self.globals
-                        .insert(global.name, (varinfo, global.expr.clone()));
-                }
-                _ => (),
+                self.globals
+                    .insert(global.name, (varinfo, global.expr.clone()));
             }
         }
         for elem in elems.iter() {
-            match elem {
-                Elem::Func(func) => {
-                    if func.external || func.internal {
-                        continue;
-                    } else {
-                        let func: &Function = func;
+            if let Elem::Func(func) = elem {
+                if func.external || func.internal {
+                    continue;
+                } else {
+                    let func: &Function = func;
 
-                        let functions = self.functions.get(&func.name).unwrap().clone();
+                    let functions = self.functions.get(&func.name).unwrap().clone();
 
-                        for fun in functions.iter() {
-                            if fun.f.ir_temp_id == func.ir_temp_id {
-                                self.cur_func = Some(fun.c);
-                                self.cur_block = Some(fun.c.new_block("entry"));
-                                let block = self.cur_block.unwrap();
+                    for fun in functions.iter() {
+                        if fun.f.ir_temp_id == func.ir_temp_id {
+                            self.cur_func = Some(fun.c);
+                            self.cur_block = Some(fun.c.new_block("entry"));
+                            let block = self.cur_block.unwrap();
 
-                                if &str(func.name).to_string() == "main" {
-                                    for (_, (varinfo, expr)) in self.globals.clone().iter() {
-                                        if expr.is_some() {
-                                            let val = self.gen_expr(expr.as_ref().unwrap());
-                                            block.add_assignment(None, varinfo.lval, val);
-                                        }
+                            if &str(func.name).to_string() == "main" {
+                                for (_, (varinfo, expr)) in self.globals.clone().iter() {
+                                    if expr.is_some() {
+                                        let val = self.gen_expr(expr.as_ref().unwrap());
+                                        block.add_assignment(None, varinfo.lval, val);
                                     }
                                 }
+                            }
 
-                                for (i, (name, param)) in func.params.iter().enumerate() {
-                                    let cty = self.ty_to_ctype(param);
-                                    let loc = fun.c.new_local(None, cty, &str(*name).to_string());
-                                    let param_ = fun.c.get_param(i as _);
-                                    block.add_assignment(None, loc, param_.to_rvalue());
-                                    self.variables.insert(
-                                        *name,
-                                        VarInfo {
-                                            lval: loc,
-                                            cty,
-                                            ty: *param.clone(),
-                                        },
-                                    );
-                                }
+                            for (i, (name, param)) in func.params.iter().enumerate() {
+                                let cty = self.ty_to_ctype(param);
+                                let loc = fun.c.new_local(None, cty, &str(*name).to_string());
+                                let param_ = fun.c.get_param(i as _);
+                                block.add_assignment(None, loc, param_.to_rvalue());
+                                self.variables.insert(
+                                    *name,
+                                    VarInfo {
+                                        lval: loc,
+                                        cty,
+                                        ty: *param.clone(),
+                                    },
+                                );
+                            }
 
-                                if let Some((name, ty)) = &func.this {
-                                    let cty = self.ty_to_ctype(ty);
-                                    let loc = fun.c.new_local(None, cty, &str(*name).to_string());
-                                    let param_ = fun.c.get_param(func.params.len() as _);
-                                    block.add_assignment(None, loc, param_);
-                                    self.variables.insert(
-                                        *name,
-                                        VarInfo {
-                                            lval: loc,
-                                            cty,
-                                            ty: *ty.clone(),
-                                        },
-                                    );
-                                }
-                                self.cur_return = Some(*func.ret.clone());
-                                self.gen_stmt(func.body.as_ref().unwrap(), true);
-                                /*if !self.terminated.last().unwrap_or(&false)
+                            if let Some((name, ty)) = &func.this {
+                                let cty = self.ty_to_ctype(ty);
+                                let loc = fun.c.new_local(None, cty, &str(*name).to_string());
+                                let param_ = fun.c.get_param(func.params.len() as _);
+                                block.add_assignment(None, loc, param_);
+                                self.variables.insert(
+                                    *name,
+                                    VarInfo {
+                                        lval: loc,
+                                        cty,
+                                        ty: *ty.clone(),
+                                    },
+                                );
+                            }
+                            self.cur_return = Some(*func.ret.clone());
+                            self.gen_stmt(func.body.as_ref().unwrap(), true);
+                            /*if !self.terminated.last().unwrap_or(&false)
+                            {
+                                let ret = self.cur_return.clone().unwrap().clone();
+                                if ret.is_void()
                                 {
-                                    let ret = self.cur_return.clone().unwrap().clone();
-                                    if ret.is_void()
+                                    self.cur_block.unwrap().end_with_void_return(None);
+                                }
+                                else
+                                {
+                                    if ret.is_struct()
                                     {
-                                        self.cur_block.unwrap().end_with_void_return(None);
+                                        panic!("Can't create zero value for struct");
                                     }
-                                    else
+                                    if !self.terminated.last().unwrap_or(&false)
                                     {
-                                        if ret.is_struct()
-                                        {
-                                            panic!("Can't create zero value for struct");
-                                        }
-                                        if !self.terminated.last().unwrap_or(&false)
-                                        {
-                                            let val =
-                                                self.ctx.new_rvalue_zero(self.ty_to_ctype(&ret));
-                                            self.cur_block.unwrap().end_with_return(None, val);
-                                        }
+                                        let val =
+                                            self.ctx.new_rvalue_zero(self.ty_to_ctype(&ret));
+                                        self.cur_block.unwrap().end_with_return(None, val);
                                     }
-                                }*/
-                                //let cty = ty_to_ctype(&func.ret, &self.ctx);
-                                //block.end_with_return(None,self.ctx.new_rvalue_zero(cty));
-                            }
+                                }
+                            }*/
+                            //let cty = ty_to_ctype(&func.ret, &self.ctx);
+                            //block.end_with_return(None,self.ctx.new_rvalue_zero(cty));
                         }
                     }
                 }
-
-                _ => (),
             }
         }
     }

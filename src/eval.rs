@@ -161,22 +161,20 @@ impl<'a> EvalCtx<'a> {
                 continue;
             }
 
-            if function.params.len() == 0 && params.len() == 0 && this.is_none() {
+            if function.params.is_empty() && params.is_empty() && this.is_none() {
                 return Some((function.clone(), vec![]));
             }
 
             for (index, param) in params.iter().enumerate() {
                 if index < function.params.len() {
                     params_okay = param == &*function.params[index].1;
+                } else if function.variadic && params_okay {
+                    not_found = false;
+                    break;
                 } else {
-                    if function.variadic && params_okay {
-                        not_found = false;
-                        break;
-                    } else {
-                        params_okay = false;
-                        not_found = true;
-                        break;
-                    }
+                    params_okay = false;
+                    not_found = true;
+                    break;
                 }
 
                 if !params_okay {
@@ -483,7 +481,7 @@ impl<'a> EvalCtx<'a> {
                                 continue;
                             }
                             let mut params_match = false;
-                            if args.len() == 0 && fun.params.len() == 0 {
+                            if args.is_empty() && fun.params.is_empty() {
                                 params_match = true;
                             } else {
                                 for (i, arg) in args.iter().enumerate() {
@@ -523,7 +521,7 @@ impl<'a> EvalCtx<'a> {
                                 continue;
                             }
                             let mut params_match = false;
-                            if args.len() == 0 && fun.params.len() == 0 {
+                            if args.is_empty() && fun.params.is_empty() {
                                 params_match = true;
                             } else {
                                 for (i, arg) in args.iter().enumerate() {
@@ -719,7 +717,7 @@ impl<'a> EvalCtx<'a> {
     fn eval(
         &mut self,
         f: &Function,
-        params: &Vec<(Name, Expr)>,
+        params: &[(Name, Expr)],
         const_: bool,
     ) -> Rc<RefCell<Const>> {
         let old_vars = self.known_vars.clone();
@@ -757,25 +755,22 @@ impl<'a> EvalCtx<'a> {
 
     pub fn run(&mut self) {
         for elem in self.ctx.file.elems.iter() {
-            match elem {
-                Elem::Func(f) => {
-                    if f.constant {
-                        if let Some(funs) = self.const_fns.get_mut(&f.name) {
-                            funs.push(f.clone());
-                        } else {
-                            let funs = vec![f.clone()];
-                            self.const_fns.insert(f.name, funs);
-                        }
-                    } else if !f.external && !f.internal {
-                        if let Some(funs) = self.functions.get_mut(&f.name) {
-                            funs.push(f.clone());
-                        } else {
-                            let funs = vec![f.clone()];
-                            self.functions.insert(f.name, funs);
-                        }
+            if let Elem::Func(f) = elem {
+                if f.constant {
+                    if let Some(funs) = self.const_fns.get_mut(&f.name) {
+                        funs.push(f.clone());
+                    } else {
+                        let funs = vec![f.clone()];
+                        self.const_fns.insert(f.name, funs);
+                    }
+                } else if !f.external && !f.internal {
+                    if let Some(funs) = self.functions.get_mut(&f.name) {
+                        funs.push(f.clone());
+                    } else {
+                        let funs = vec![f.clone()];
+                        self.functions.insert(f.name, funs);
                     }
                 }
-                _ => (),
             }
         }
 
