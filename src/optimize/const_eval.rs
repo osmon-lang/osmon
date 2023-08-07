@@ -140,16 +140,16 @@ fn ty_size(ty: &Type) -> Option<usize> {
         Type::Array(array) => {
             if array.len.is_some() {
                 if let Some(size) = ty_size(&array.subtype) {
-                    return Some(size * array.len.unwrap());
+                    Some(size * array.len.unwrap())
                 } else {
-                    return None;
+                    None
                 }
             } else {
-                return Some(std::mem::size_of::<*const u8>());
+                Some(std::mem::size_of::<*const u8>())
             }
         }
-        Type::Func(_) => return Some(std::mem::size_of::<*const u8>()),
-        Type::Void(_) => return Some(0),
+        Type::Func(_) => Some(std::mem::size_of::<*const u8>()),
+        Type::Void(_) => Some(0),
     }
 }
 
@@ -487,13 +487,13 @@ impl<'a> ConstEval<'a> {
                     }
                 }
 
-                return rc(Const::None);
+                rc(Const::None)
             }
 
             ExprKind::Ident(name) => self.try_get_var(name),
             ExprKind::Assign(to, from) => {
                 self.try_assign(to, from);
-                return self.eval(from);
+                self.eval(from)
             }
             ExprKind::ArrayIdx(expr_, id) => {
                 let id = self.eval(id);
@@ -512,7 +512,7 @@ impl<'a> ConstEval<'a> {
                 if let Const::Array(array) = array {
                     return array.borrow()[idx].clone();
                 } else {
-                    return rc(Const::None);
+                    rc(Const::None)
                 }
             }
 
@@ -633,9 +633,9 @@ impl<'a> ConstEval<'a> {
             }
             ExprKind::SizeOf(ty) => {
                 if let Some(size) = ty_size(ty) {
-                    return rc(Const::Imm(size as i64, IntSuffix::Int, IntBase::Dec));
+                    rc(Const::Imm(size as i64, IntSuffix::Int, IntBase::Dec))
                 } else {
-                    return rc(Const::None);
+                    rc(Const::None)
                 }
             }
 
@@ -681,12 +681,12 @@ impl<'a> ConstEval<'a> {
         if val.is_some() {
             let val: &Const = &val.as_ref().unwrap().borrow();
             if let Const::Ret(val) = val {
-                return val.clone();
+                val.clone()
             } else {
-                return rc(val.clone());
+                rc(val.clone())
             }
         } else {
-            return rc(Const::None);
+            rc(Const::None)
         }
     }
     /// Evaluate constant
@@ -704,21 +704,21 @@ impl<'a> ConstEval<'a> {
                         }
                     }
                 }
-                return last;
+                last
             }
             StmtKind::Expr(expr) => {
-                return Some(self.eval(expr));
+                Some(self.eval(expr))
             }
             StmtKind::Return(expr) => {
                 if expr.is_some() {
                     let val = self.eval(expr.as_ref().unwrap());
                     if val.borrow().is_none() {
-                        return None;
+                        None
                     } else {
-                        return Some(rc(Const::Ret(val)));
+                        Some(rc(Const::Ret(val)))
                     }
                 } else {
-                    return Some(rc(Const::Ret(Rc::new(RefCell::new(Const::Void)))));
+                    Some(rc(Const::Ret(Rc::new(RefCell::new(Const::Void)))))
                 }
             }
             StmtKind::Var(name, _, ty, expr) => {
@@ -733,7 +733,7 @@ impl<'a> ConstEval<'a> {
                     self.known_vars.insert(*name, val);
                 }
 
-                return Some(rc(Const::Void));
+                Some(rc(Const::Void))
             }
             StmtKind::If(cond, then_body, else_body) => {
                 let val = self.eval(cond);
@@ -752,7 +752,7 @@ impl<'a> ConstEval<'a> {
                         return Some(Rc::new(RefCell::new(Const::Void)));
                     }
                 }
-                return Some(Rc::new(RefCell::new(Const::Void)));
+                Some(Rc::new(RefCell::new(Const::Void)))
             }
 
             StmtKind::While(cond, body) => {
@@ -769,7 +769,7 @@ impl<'a> ConstEval<'a> {
                         return None;
                     }
                 }
-                return Some(Rc::new(RefCell::new(Const::Void)));
+                Some(Rc::new(RefCell::new(Const::Void)))
             }
 
             _ => panic!("Unsupported statement in constant function"),

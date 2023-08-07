@@ -507,7 +507,7 @@ impl<'a> Codegen<'a> {
         match ty {
             Type::Basic(basic) => {
                 if let Some(s) = self.structures.get(&basic.name) {
-                    return Some(s.clone());
+                    Some(s.clone())
                 } else if let Some(ty) = self.aliases.get(&basic.name) {
                     return self.find_struct(ty);
                 } else {
@@ -516,7 +516,7 @@ impl<'a> Codegen<'a> {
             }
             Type::Struct(basic) => {
                 if let Some(s) = self.structures.get(&basic.name) {
-                    return Some(s.clone());
+                    Some(s.clone())
                 } else if let Some(ty) = self.aliases.get(&basic.name) {
                     return self.find_struct(ty);
                 } else {

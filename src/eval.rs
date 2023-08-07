@@ -394,7 +394,7 @@ impl<'a> EvalCtx<'a> {
                     }
                     self.maybe_replace_expr(&val.borrow(), expr.id, expr.pos);
 
-                    return val;
+                    val
                 }
                 ExprKind::Array(ty, exprs) => {
                     let mut pos_and_id = vec![];
@@ -413,7 +413,7 @@ impl<'a> EvalCtx<'a> {
 
                     let val = rc(Const::Array(rc(values), pos_and_id, ty.clone()));
 
-                    return val;
+                    val
                 }
                 ExprKind::ArrayIdx(array_e, idx_e) => {
                     let array = self.expr(array_e, const_);
@@ -449,7 +449,7 @@ impl<'a> EvalCtx<'a> {
 
                     self.try_assign(to, from_, const_);
 
-                    return from;
+                    from
                 }
                 ExprKind::Field(val, field) => {
                     let val = self.expr(val, const_);
@@ -465,7 +465,7 @@ impl<'a> EvalCtx<'a> {
                         }
                     }
 
-                    return rc(Const::None);
+                    rc(Const::None)
                 }
                 ExprKind::Ident(name) => self.try_get_var(name, const_),
                 ExprKind::Call(name, this, args) => {
@@ -552,9 +552,9 @@ impl<'a> EvalCtx<'a> {
                     } else {
                     }
 
-                    return rc(Const::None);
+                    rc(Const::None)
                 }
-                _ => return rc(Const::None),
+                _ => rc(Const::None),
             }
         } else {
             if let ExprKind::CompTime(expr_) = &expr.kind {
@@ -601,7 +601,7 @@ impl<'a> EvalCtx<'a> {
                             }
                         }
                     }
-                    return last;
+                    last
                 }
                 StmtKind::Expr(expr) => {
                     let val = self.expr(expr, const_);
@@ -609,7 +609,7 @@ impl<'a> EvalCtx<'a> {
                         return None;
                     }
                     self.maybe_replace_expr(&val.borrow(), expr.id, expr.pos);
-                    return Some(val);
+                    Some(val)
                 }
                 StmtKind::Return(expr) => {
                     if expr.is_some() {
@@ -620,12 +620,12 @@ impl<'a> EvalCtx<'a> {
                         }
                         self.maybe_replace_expr(&val.borrow(), expr.id, expr.pos);
                         if val.borrow().is_none() {
-                            return None;
+                            None
                         } else {
-                            return Some(val);
+                            Some(val)
                         }
                     } else {
-                        return Some(rc(Const::Ret(Rc::new(RefCell::new(Const::Void)))));
+                        Some(rc(Const::Ret(Rc::new(RefCell::new(Const::Void)))))
                     }
                 }
                 StmtKind::Var(name, _, ty, expr) => {
@@ -642,7 +642,7 @@ impl<'a> EvalCtx<'a> {
                         self.known_vars.insert(*name, val);
                     }
 
-                    return Some(rc(Const::Void));
+                    Some(rc(Const::Void))
                 }
                 StmtKind::If(cond, then_body, else_body) => {
                     let val = self.expr(cond, const_);
@@ -663,7 +663,7 @@ impl<'a> EvalCtx<'a> {
                             return Some(Rc::new(RefCell::new(Const::Void)));
                         }
                     }
-                    return Some(Rc::new(RefCell::new(Const::Void)));
+                    Some(Rc::new(RefCell::new(Const::Void)))
                 }
 
                 StmtKind::While(cond_, body) => {
@@ -690,25 +690,25 @@ impl<'a> EvalCtx<'a> {
                             self.maybe_replace_expr(&cond, cond_.id, cond_.pos);
                         }
                     }
-                    return Some(Rc::new(RefCell::new(Const::Void)));
+                    Some(Rc::new(RefCell::new(Const::Void)))
                 }
 
-                _ => return None,
+                _ => None,
             }
         } else {
             match &stmt.kind {
-                StmtKind::CompTime(s) => return self.eval_stmt(s, true),
+                StmtKind::CompTime(s) => self.eval_stmt(s, true),
                 StmtKind::Block(b) => {
                     for s in b.iter() {
                         self.eval_stmt(s, false);
                     }
-                    return Some(rc(Const::Void));
+                    Some(rc(Const::Void))
                 }
                 StmtKind::Expr(e) => {
                     if let ExprKind::CompTime(s) = &e.kind {
-                        return Some(self.expr(s, true));
+                        Some(self.expr(s, true))
                     } else {
-                        return None;
+                        None
                     }
                 }
                 _ => None,
@@ -746,12 +746,12 @@ impl<'a> EvalCtx<'a> {
         if val.is_some() {
             let val: &Const = &val.as_ref().unwrap().borrow();
             if let Const::Ret(val) = val {
-                return val.clone();
+                val.clone()
             } else {
-                return rc(val.clone());
+                rc(val.clone())
             }
         } else {
-            return rc(Const::None);
+            rc(Const::None)
         }
     }
 

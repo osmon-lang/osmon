@@ -687,14 +687,14 @@ impl<'a> SemCheck<'a> {
                 let ty = self.infer_type(&ty);
                 self.types.insert(expr.id, ty.clone());
 
-                return ty;
+                ty
             }
             ExprKind::New(ty) => {
                 let infered = self.infer_type(ty);
                 self.ctx.gced.insert(expr.id);
 
                 self.types.insert(expr.id, infered.clone());
-                return infered;
+                infered
             }
             ExprKind::Int(_, _, suffix) => {
                 let ty = match suffix {
@@ -742,7 +742,7 @@ impl<'a> SemCheck<'a> {
                 let ty = self.infer_type(&ty);
                 if let Type::Ptr(ty) = ty {
                     self.types.insert(expr.id, *ty.subtype.clone());
-                    return *ty.subtype.clone();
+                    *ty.subtype.clone()
                 } else {
                     error!(format!("Dereferencing non-ptr type {}", ty), expr.pos);
                 }

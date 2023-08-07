@@ -580,7 +580,7 @@ impl Function {
                             return true;
                         }
                     }
-                    return false;
+                    false
                 }
                 StmtKind::Block(block) => {
                     for stmt in block.iter_mut() {
@@ -589,14 +589,14 @@ impl Function {
                         }
                     }
 
-                    return false;
+                    false
                 }
                 StmtKind::Expr(expr) => {
                     if expr.id == id {
                         *expr = Box::new(to);
                         return true;
                     }
-                    return false;
+                    false
                 }
                 StmtKind::If(e, then, other) => {
                     if e.id == id {
@@ -614,7 +614,7 @@ impl Function {
                             return false;
                         }
                     }
-                    return false;
+                    false
                 }
                 StmtKind::While(expr, then) => {
                     if expr.id == id {
@@ -622,9 +622,9 @@ impl Function {
                         return true;
                     }
                     if replace_stmt(then, id, to.clone()) {
-                        return true;
+                        true
                     } else {
-                        return false;
+                        false
                     }
                 }
                 StmtKind::Loop(body) => replace_stmt(body, id, to.clone()),
@@ -688,9 +688,9 @@ impl Expr {
 impl Expr {
     pub fn map<U>(&self, mut f: impl FnMut(&Self) -> U, or_: U) -> Vec<U> {
         match &self.kind {
-            ExprKind::Unary(_, expr) => return vec![f(expr)],
-            ExprKind::Binary(_, e1, e2) => return vec![f(e1), f(e2)],
-            ExprKind::ArrayIdx(e1, e2) => return vec![f(e1), f(e2)],
+            ExprKind::Unary(_, expr) => vec![f(expr)],
+            ExprKind::Binary(_, e1, e2) => vec![f(e1), f(e2)],
+            ExprKind::ArrayIdx(e1, e2) => vec![f(e1), f(e2)],
             ExprKind::Array(_, exprs) => exprs.iter().map(|e| f(e)).collect(),
             ExprKind::Call(_, e1, e2) => {
                 let mut v = vec![];

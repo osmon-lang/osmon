@@ -767,7 +767,7 @@ impl<'a> Parser<'a> {
     fn parse_import(&mut self) -> Result<Elem, MsgWithPos> {
         if let TokenKind::String(s) = &self.token.kind.clone() {
             self.advance_token()?;
-            return Ok(Elem::Import(s.clone()));
+            Ok(Elem::Import(s.clone()))
         } else {
             unimplemented!()
             //Err(MsgWithPos::new(self.lexer.reader.path().to_owned(),self.src(),
