@@ -12,6 +12,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Update system
+        run: sudo apt-get update && sudo apt-get upgrade -y
+
       - name: Install required libs (gcc, llvm, clang, libgccjit)
         run: sudo apt-get install build-essential llvm clang libgccjit-12-dev
 
