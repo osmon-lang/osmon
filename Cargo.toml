@@ -1,6 +1,6 @@
 [package]
 name = "havo"
-version = "0.4.1"
+version = "0.4.2"
 edition = "2021"
 homepage = "https://osmon-lang.uz"
 documentation = "https://wiki.osmon-lang.uz"
@@ -9,7 +9,7 @@ description = "Static compiler built for Osmon Programming Language"
 authors = ["Sokhibjon Orzikulov <sakhib@orzklv.uz>"]
 readme = "readme.md"
 keywords = ["compiler", "uzbek", "osmon"]
-license = "Apache-2.0 or MIT"
+license = "Apache-2.0"
 exclude = ["target"]
 
 [dependencies]
