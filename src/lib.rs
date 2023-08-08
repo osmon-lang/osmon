@@ -5,12 +5,14 @@
 #![allow(temporary_cstring_as_ptr)]
 #![allow(clippy::result_large_err)]
 #![allow(clippy::unnecessary_unwrap)]
-pub mod macros;
+#![allow(clippy::map_entry)]
 pub mod ast2cpp;
+pub mod cli;
 pub mod err;
 pub mod eval;
 pub mod gccjit;
 pub mod ir;
+pub mod macros;
 pub mod optimize;
 pub mod semantic;
 pub mod semck;

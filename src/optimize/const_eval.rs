@@ -583,8 +583,7 @@ impl<'a> ConstEval<'a> {
                     }
                 } else if false {
                     let builtin = *self.builtins.get(&name.name()).unwrap();
-                    let builtin: ConstBuiltin =
-                        unsafe { transmute(builtin) };
+                    let builtin: ConstBuiltin = unsafe { transmute(builtin) };
                     let mut params = vec![];
                     for arg in args.iter() {
                         let val = self.eval(arg);
@@ -697,9 +696,7 @@ impl<'a> ConstEval<'a> {
                 }
                 last
             }
-            StmtKind::Expr(expr) => {
-                Some(self.eval(expr))
-            }
+            StmtKind::Expr(expr) => Some(self.eval(expr)),
             StmtKind::Return(expr) => {
                 if expr.is_some() {
                     let val = self.eval(expr.as_ref().unwrap());
@@ -882,14 +879,18 @@ impl<'a> ConstEval<'a> {
         for elem in self.ctx.file.elems.clone().iter() {
             if let Elem::Func(func) = elem {
                 if func.constant {
-                    if let std::collections::hash_map::Entry::Vacant(e) = self.const_functions.entry(func.name) {
+                    if let std::collections::hash_map::Entry::Vacant(e) =
+                        self.const_functions.entry(func.name)
+                    {
                         e.insert(vec![func.clone()]);
                     } else {
                         let funcs = self.const_functions.get_mut(&func.name).unwrap();
                         funcs.push(func.clone());
                     }
                 } else if !func.internal && !func.external {
-                    if let std::collections::hash_map::Entry::Vacant(e) = self.functions.entry(func.name) {
+                    if let std::collections::hash_map::Entry::Vacant(e) =
+                        self.functions.entry(func.name)
+                    {
                         e.insert(vec![func.clone()]);
                     } else {
                         let funcs = self.functions.get_mut(&func.name).unwrap();

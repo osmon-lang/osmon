@@ -1,6 +1,6 @@
+use lang_tester::LangTester;
 use std::fs::read_to_string;
 use std::process::Command;
-use lang_tester::LangTester;
 
 static COMMENT_PREFIX: &str = "//";
 

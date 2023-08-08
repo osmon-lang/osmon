@@ -593,7 +593,7 @@ impl Function {
                     }
                     if other.is_some() {
                         let other = other.as_mut().unwrap();
-                        return replace_stmt(other, id, to.clone())
+                        return replace_stmt(other, id, to.clone());
                     }
                     false
                 }

@@ -10,9 +10,11 @@ format:
   cargo fmt
 
 init:
-    release
-    std-make
-    selfhost-init
+    cargo build --release
+    cd lib && gcc -c -o havo_cstd.o havo_cstd.c
+    cd lib && gcc -shared -o libhavostd.so havo_cstd.o
+    cp ./lib/libhavostd.so ./std
+    cp -R ./std ./stage_1/src/
 
 # Self host
 selfhost-init:
@@ -32,7 +34,3 @@ std-compile:
 
 std-install:
     cp ./lib/libhavostd.so ./std
-
-std-make:
-    std-compile
-    std-install

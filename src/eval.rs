@@ -706,12 +706,7 @@ impl<'a> EvalCtx<'a> {
         }
     }
 
-    fn eval(
-        &mut self,
-        f: &Function,
-        params: &[(Name, Expr)],
-        const_: bool,
-    ) -> Rc<RefCell<Const>> {
+    fn eval(&mut self, f: &Function, params: &[(Name, Expr)], const_: bool) -> Rc<RefCell<Const>> {
         let old_vars = self.known_vars.clone();
         //self.known_vars.clear();
         self.cur_func = Some(f.id);

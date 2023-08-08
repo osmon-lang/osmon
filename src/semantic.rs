@@ -30,8 +30,21 @@ pub fn ty_is_any_int(ty: &Type) -> bool {
     match ty {
         Type::Basic(basic) => {
             let s: &str = &str(basic.name).to_string();
-            matches!(s, "uchar" | "char" | "u8" | "u16" | "u32" | "u64" | "i64" | "i32" | "i16" | "i8"
-                | "isize" | "usize")
+            matches!(
+                s,
+                "uchar"
+                    | "char"
+                    | "u8"
+                    | "u16"
+                    | "u32"
+                    | "u64"
+                    | "i64"
+                    | "i32"
+                    | "i16"
+                    | "i8"
+                    | "isize"
+                    | "usize"
+            )
         }
 
         _ => false,
@@ -183,8 +196,8 @@ impl<'a> SemCheck<'a> {
                 use crate::syntax::{lexer, parser::Parser};
                 use lexer::reader::Reader;
 
-                let reader =
-                    Reader::from_file(&import).unwrap_or_else(|_| panic!("File {} not found", import));
+                let reader = Reader::from_file(&import)
+                    .unwrap_or_else(|_| panic!("File {} not found", import));
                 let mut parser = Parser::new(reader, &mut file);
                 parser.parse().expect("Error");
 
@@ -248,14 +261,18 @@ impl<'a> SemCheck<'a> {
                             self.ctx.file.elems.insert(0, Elem::Link(*name));
                         }
                         Elem::Const(c) => {
-                            if let std::collections::hash_map::Entry::Vacant(e) = self.imported.entry(c.name) {
+                            if let std::collections::hash_map::Entry::Vacant(e) =
+                                self.imported.entry(c.name)
+                            {
                                 e.insert(Elem::Const(c.clone()));
                                 self.ctx.file.elems.push(Elem::Const(c.clone()));
                             }
                         }
                         Elem::Struct(_s) => (),
                         Elem::Global(glob) => {
-                            if let std::collections::hash_map::Entry::Vacant(e) = self.imported.entry(glob.name) {
+                            if let std::collections::hash_map::Entry::Vacant(e) =
+                                self.imported.entry(glob.name)
+                            {
                                 e.insert(Elem::Global(glob.clone()));
                                 self.ctx.file.elems.push(Elem::Global(glob.clone()));
                             }
@@ -371,7 +388,9 @@ impl<'a> SemCheck<'a> {
                         variadic: func.variadic,
                     };
 
-                    if let std::collections::hash_map::Entry::Vacant(e) = self.signatures.entry(func.name) {
+                    if let std::collections::hash_map::Entry::Vacant(e) =
+                        self.signatures.entry(func.name)
+                    {
                         e.insert(vec![sig.clone()]);
                     } else {
                         let sigs = self.signatures.get_mut(&func.name).unwrap();

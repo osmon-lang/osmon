@@ -119,9 +119,8 @@ impl<'a> Codegen<'a> {
                             }
 
                             size
-                        } else if let Some(ty) = self
-                            .aliases
-                            .get(&crate::syntax::interner::intern(s))
+                        } else if let Some(ty) =
+                            self.aliases.get(&crate::syntax::interner::intern(s))
                         {
                             self.ty_size(ty)
                         } else {
@@ -223,7 +222,7 @@ impl<'a> Codegen<'a> {
                     let mut types = vec![];
                     for field in struct_.fields.iter() {
                         let field: &StructField = field;
-                        let cty = self.ty_to_ctype(&field.data_type).clone();
+                        let cty = self.ty_to_ctype(&field.data_type);
                         types.push(field.data_type.clone());
                         let name: &str = &str(field.name).to_string();
                         let cfield = self.ctx.new_field(
@@ -271,9 +270,7 @@ impl<'a> Codegen<'a> {
         let type_ = self.get_id_type(to.id);
         let _ = self.get_id_type(from.id);
         let do_cast = match type_ {
-            Type::Basic(basic) => {
-                !self.structures.contains_key(&basic.name)
-            }
+            Type::Basic(basic) => !self.structures.contains_key(&basic.name),
             Type::Struct(_) => false,
             Type::Ptr(_) => true,
             Type::Array(_) => false,
@@ -891,7 +888,7 @@ impl<'a> Codegen<'a> {
                         lval.to_rvalue()
                     } else {
                         self.gen_expr(&constexpr)
-                    }
+                    };
                 };
                 self.expr_to_lvalue(expr).unwrap().to_rvalue()
             }
@@ -1088,10 +1085,8 @@ impl<'a> Codegen<'a> {
 
                     tmp.get_address(Some(gccloc_from_loc(&self.ctx, &expr.pos)))
                 } else {
-                    val
-                        .unwrap()
+                    val.unwrap()
                         .get_address(Some(gccloc_from_loc(&self.ctx, &expr.pos)))
-
                 }
             }
             ExprKind::Conv(val, to) => {
@@ -1586,14 +1581,9 @@ impl<'a> Codegen<'a> {
 
                     let ret = self.ty_to_ctype(&func.ret);
 
-                    let f = self.ctx.new_function(
-                        None,
-                        linkage,
-                        ret,
-                        &params,
-                        &name,
-                        func.variadic,
-                    );
+                    let f =
+                        self.ctx
+                            .new_function(None, linkage, ret, &params, &name, func.variadic);
 
                     let (this_ast, this_ir) = if let Some((_, ty)) = &func.this {
                         let ty = *ty.clone();

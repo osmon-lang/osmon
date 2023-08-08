@@ -260,7 +260,12 @@ pub enum InstructionData {
 
 impl InstructionData {
     pub fn without_result(&self) -> bool {
-        matches!(self, InstructionData::Store(_, _, _) | InstructionData::Branch(_, _, _) | InstructionData::Return(_, _))
+        matches!(
+            self,
+            InstructionData::Store(_, _, _)
+                | InstructionData::Branch(_, _, _)
+                | InstructionData::Return(_, _)
+        )
     }
 }
 
