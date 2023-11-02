@@ -38,8 +38,6 @@ constexpr TYPE_STRUCT = 34
 constexpr TYPE_VOID = 35
 constexpr TYPE_VECTOR = 36
 
-
-
 pub struct Pos {
 	col: i32,
 	row: i32,

@@ -26,7 +26,7 @@ pkgs.mkShell {
   NIX_LDFLAGS = "-L${libiconvPath} -L${./lib}";
 
   shellHook = ''
-    export DYLD_LIBRARY_PATH="${./lib}:$DYLD_LIBRARY_PATH"
+    # export DYLD_LIBRARY_PATH="${./lib}:$DYLD_LIBRARY_PATH"
 
     echo "Loaded development environment with libgccjit, Rust, GCC, LLVM, Clang!"
   '';
