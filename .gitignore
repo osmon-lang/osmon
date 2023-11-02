@@ -7,11 +7,11 @@ output.cc
 output
 
 # Compiled .so files
-lib/havo_cstd.o
-lib/libhavostd.so
+lib/osmon_cstd.o
+lib/libosmonstd.so
 
-# Uncompiled libhavostd
-std/libhavostd.so
+# Uncompiled libosmonstd
+std/libosmonstd.so
 
 # Copy of the standard library
 stage_1/src/std

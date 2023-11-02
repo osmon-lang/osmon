@@ -3,15 +3,15 @@
   <source media="(prefers-color-scheme: dark)" srcset="https://github.com/osmon-lang/.github/raw/main/ASSETS/Osmon%20White.png">
   <img alt="Osmon's Logo" height="100" align="left" src="https://github.com/osmon-lang/.github/raw/main/ASSETS/Osmon%20Black.png">
 </picture>
-<h1 style="display: inline">Havo</h1>
+<h1 style="display: inline">Osmon</h1>
 
 Statically compilation component for Osmon. 
 
 </header>
 
-[![GitHub top language](https://img.shields.io/github/languages/top/osmon-lang/havo?color=232323&logo=github&labelColor=232323)](https://github.com/osmon-lang/havo)
+[![GitHub top language](https://img.shields.io/github/languages/top/osmon-lang/osmon?color=232323&logo=github&labelColor=232323)](https://github.com/osmon-lang/osmon)
 [![Channel](https://img.shields.io/badge/telegram-grey?color=232323&label=chat&logo=telegram&labelColor=232323)](https://t.me/osmonlang)
-[![Tests CI](https://img.shields.io/github/actions/workflow/status/osmon-lang/havo/test.yml?color=232323&label=test&logo=github-actions&labelColor=232323)](https://github.com/osmon-lang/havo/actions/workflows/test.yml)
+[![Tests CI](https://img.shields.io/github/actions/workflow/status/osmon-lang/osmon/test.yml?color=232323&label=test&logo=github-actions&labelColor=232323)](https://github.com/osmon-lang/osmon/actions/workflows/test.yml)
  
 ## About
 
@@ -49,14 +49,14 @@ pub func main() i32 {
 For *NIX based operating systems, you can install Osmon by running the following command:
 
 ```shell
-cargo install havo
+cargo install osmon
 ```
 
 However, it's not possible to install Osmon on Windows. You can use [WSL](https://docs.microsoft.com/en-us/windows/wsl/install-win10) to install Osmon on Windows.
-If you want to use havo's libraries, then you may want to run:
+If you want to use osmon's libraries, then you may want to run:
 
 ```shell
-cargo add havo
+cargo add osmon
 ```
 
 ## License

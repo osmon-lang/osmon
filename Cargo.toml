@@ -1,10 +1,10 @@
 [package]
-name = "havo"
+name = "osmon"
 version = "0.4.3"
 edition = "2021"
 homepage = "https://osmon-lang.uz"
 documentation = "https://wiki.osmon-lang.uz"
-repository = "https://github.com/osmon-lang/havo"
+repository = "https://github.com/osmon-lang/osmon"
 description = "Static compiler built for Osmon Programming Language"
 authors = ["Sokhibjon Orzikulov <sakhib@orzklv.uz>"]
 readme = "readme.md"

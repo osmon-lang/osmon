@@ -23,7 +23,7 @@ fn run_tests() {
                 .join("\n")
         })
         .test_cmds(move |p| {
-            let mut compiler = Command::new("havo");
+            let mut compiler = Command::new("osmon");
             compiler.args(&["--jit", p.to_str().unwrap()]);
             vec![("Compiler", compiler)]
         })

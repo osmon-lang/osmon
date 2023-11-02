@@ -78,7 +78,7 @@ jobs:
 
       - uses: taiki-e/upload-rust-binary-action@v1
         with:
-          bin: havo
+          bin: osmon
           tar: none
           zip: all
           target: ${{ matrix.target }}

@@ -1,7 +1,7 @@
 #![allow(clippy::result_large_err)]
 
 use clap::Parser as ClapParser;
-use havo::{
+use osmon::{
     cli::Cli,
     err::MsgWithPos,
     gccjit::Codegen as GccJITCodegen,
@@ -11,7 +11,7 @@ use havo::{
     Context,
 };
 
-use havo::cli::Backend;
+use osmon::cli::Backend;
 use std::path::PathBuf;
 
 fn main() -> Result<(), MsgWithPos> {
@@ -53,13 +53,13 @@ fn main() -> Result<(), MsgWithPos> {
     ctx.file.elems.extend(
         cli.libraries_link
             .iter()
-            .map(|name| Elem::Link(havo::intern(name))),
+            .map(|name| Elem::Link(osmon::intern(name))),
     );
     let mut semantic = SemCheck::new(&mut ctx);
 
     semantic.run();
 
-    use havo::eval::EvalCtx;
+    use osmon::eval::EvalCtx;
     let mut eval = EvalCtx::new(&mut ctx);
     eval.run();
 
@@ -71,12 +71,12 @@ fn main() -> Result<(), MsgWithPos> {
 
     match cli.backend {
         Backend::CPP => {
-            use havo::ast2cpp::Translator;
+            use osmon::ast2cpp::Translator;
             let mut translator = Translator::new(ctx);
             translator.run();
         }
         Backend::GccJIT => {
-            let mut cgen = GccJITCodegen::new(&mut ctx, "HavoModule");
+            let mut cgen = GccJITCodegen::new(&mut ctx, "OsmonModule");
             for opt in cli.gcc_opts.iter() {
                 cgen.ctx.add_command_line_option(opt);
             }

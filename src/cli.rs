@@ -20,8 +20,8 @@ impl Display for Backend {
 }
 
 #[derive(Debug, Parser)]
-#[command(name = "havo")]
-#[command(about = "The Havo Compiler", long_about = None)]
+#[command(name = "osmon")]
+#[command(about = "The Osmon Compiler", long_about = None)]
 pub struct Cli {
     #[arg(required = true)]
     pub file: PathBuf,
