@@ -1,6 +1,5 @@
 link "gc"
 
-
 extern func GC_malloc(size: i32) *u8;
 extern func GC_malloc_ignore_off_page(n: i32) *u8;
 extern func GC_init() void;
@@ -9,8 +8,6 @@ extern func GC_gcollect() void;
 extern func GC_collect_a_little() void;
 extern var GC_no_dls: i32;
 extern var GC_java_finalization: i32;
-
-
 
 pub func gc_alloc(size: i32) *u8 {
 	if size > 256 {
@@ -21,7 +18,6 @@ pub func gc_alloc(size: i32) *u8 {
 
 	return null;
 }
-
 
 pub func gc_initialize() void {
 	GC_java_finalization = 1;
