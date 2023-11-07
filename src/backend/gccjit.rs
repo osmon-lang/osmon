@@ -58,11 +58,11 @@ pub struct GccStruct {
     pub types: Vec<Type>,
 }
 
-use super::eval::Const;
+use crate::eval::Const;
 use std::{cell::RefCell, rc::Rc};
-/// Main unit used in codegeneration.
+/// Main unit used in code generation.
 ///
-/// This unit performs translating AST into GIMPLE tree,after translation GCC
+/// This unit performs translating AST into GIMPLE tree, after translation GCC
 /// performs translation to RTL and then optimizes it and outputs machine code
 pub struct Codegen<'a> {
     pub ctx: Context,
@@ -1410,12 +1410,9 @@ impl<'a> Codegen<'a> {
             ExprKind::Char(c) => self
                 .ctx
                 .new_rvalue_from_int(self.ctx.new_type::<char>(), *c as i32),
-            ExprKind::Null => {
-                unsafe {
-                    self
-                        .ctx
-                        .new_rvalue_from_ptr(self.ctx.new_type::<*mut u8>(), std::ptr::null_mut::<()>())
-                }
+            ExprKind::Null => unsafe {
+                self.ctx
+                    .new_rvalue_from_ptr(self.ctx.new_type::<*mut u8>(), std::ptr::null_mut::<()>())
             },
             v => panic!("{:?}", v),
         }

@@ -1,18 +1,19 @@
 #![allow(clippy::result_large_err)]
 
 use clap::Parser as ClapParser;
+use osmon::cli::Backend;
 use osmon::{
     cli::Cli,
     err::MsgWithPos,
-    gccjit::Codegen as GccJITCodegen,
-    // optimize::const_eval,
     semantic::*,
     syntax::{ast::*, lexer::reader::Reader, parser::Parser},
     Context,
 };
-
-use osmon::cli::Backend;
 use std::path::PathBuf;
+
+// Backend
+use osmon::backend::ast2cpp::Translator;
+use osmon::backend::gccjit::Codegen as GccJITCodegen;
 
 fn main() -> Result<(), MsgWithPos> {
     let cli: Cli = Cli::parse();
@@ -71,7 +72,6 @@ fn main() -> Result<(), MsgWithPos> {
 
     match cli.backend {
         Backend::CPP => {
-            use osmon::ast2cpp::Translator;
             let mut translator = Translator::new(ctx);
             translator.run();
         }

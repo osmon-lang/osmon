@@ -6,11 +6,11 @@
 #![allow(clippy::result_large_err)]
 #![allow(clippy::unnecessary_unwrap)]
 #![allow(clippy::map_entry)]
-pub mod ast2cpp;
+
+pub mod backend;
 pub mod cli;
 pub mod err;
 pub mod eval;
-pub mod gccjit;
 pub mod ir;
 pub mod macros;
 pub mod optimize;
@@ -19,7 +19,6 @@ pub mod semck;
 pub mod syntax;
 
 pub use syntax::{ast, position::Position};
-
 pub use syntax::interner::{intern, str, INTERNER};
 
 use parking_lot::{Mutex, RwLock};
@@ -36,6 +35,7 @@ pub fn gen_id() -> NodeId {
 }
 
 use std::cell::RefCell;
+
 #[derive(Debug, Default)]
 pub struct NodeIdGenerator {
     value: RefCell<usize>,
@@ -102,15 +102,18 @@ impl Context {
         } else {
             format!("{}/{}", self.file.root, path)
         };
+
         let mut file = File {
             elems: vec![],
             src: String::new(),
             path: String::new(),
             root: import.clone(),
         };
+
         use crate::syntax::{lexer, parser::Parser};
         use lexer::reader::Reader;
         use syntax::ast::Elem;
+
         let reader = Reader::from_file(&import).expect("File not found");
         let mut parser = Parser::new(reader, &mut file);
         parser.parse().expect("Error");
@@ -152,6 +155,7 @@ impl Context {
 
     pub fn imports(&mut self) {
         use syntax::ast::Elem;
+
         for elem in self.file.elems.clone().iter() {
             if let Elem::Import(path) = elem {
                 self.import(path);
