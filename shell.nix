@@ -8,8 +8,6 @@ in
 pkgs.mkShell {
   buildInputs = [
     pkgs.gcc
-    pkgs.rustc
-    pkgs.cargo
     pkgs.libiconv
     pkgs.libgccjit
     pkgs.llvmPackages.llvm
@@ -28,6 +26,6 @@ pkgs.mkShell {
   shellHook = ''
     # export DYLD_LIBRARY_PATH="${./lib}:$DYLD_LIBRARY_PATH"
 
-    echo "Loaded development environment with libgccjit, Rust, GCC, LLVM, Clang!"
+    echo "Loaded development environment with libgccjit, GCC, LLVM, Clang!"
   '';
 }
