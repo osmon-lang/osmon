@@ -28,10 +28,8 @@ pkgs.rustPlatform.buildRustPackage rec {
   NIX_LDFLAGS = "-L${libiconvPath} -L${./lib}";
 
   meta = with lib; {
-    homepage = "https://osmon-lang.uz";
-    description = ''
-      Highly experimental programming language developed by @orzklv.";
-    '';
+    homepage = manifest.homepage;
+    description = manifest.description;
     licencse = licenses.mit;
     platforms = with platforms; linux ++ darwin;
 
