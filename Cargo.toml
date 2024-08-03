@@ -22,6 +22,4 @@ clap = { version = "4", features = ["derive"] }
 linked-hash-map = "0.5.6"
 
 [dev-dependencies]
-lang_tester = { git = "https://github.com/softdevteam/lang_tester", branch = "master" }
 tempdir = "0.3"
-
