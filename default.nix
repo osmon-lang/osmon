@@ -1,5 +1,6 @@
 { pkgs ? import <nixpkgs> { } }:
 let
+  lib = pkgs.lib;
   getLibFolder = pkg: "${pkg}/lib";
   libiconvPath = "${pkgs.libiconv}/lib";
   manifest = (pkgs.lib.importTOML ./Cargo.toml).package;
