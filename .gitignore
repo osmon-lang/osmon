@@ -1,0 +1,17 @@
+target
+Cargo.lock
+
+# Compiled files
+a.out
+output.cc
+output
+
+# Compiled .so files
+lib/osmon_cstd.o
+lib/libosmonstd.so
+
+# Uncompiled libosmonstd
+std/libosmonstd.so
+
+# Copy of the standard library
+stage_1/src/std

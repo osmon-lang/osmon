@@ -1,0 +1,85 @@
+name: Release
+
+permissions:
+  contents: write
+
+on:
+  push:
+    tags:
+      - v[0-9]+.*
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: taiki-e/create-gh-release-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  upload-assets:
+    strategy:
+      matrix:
+        include:
+          - target: aarch64-apple-darwin
+            os: macos-latest
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+          - target: x86_64-apple-darwin
+            os: macos-latest
+          - target: aarch64-unknown-linux-gnu
+            os: ubuntu-latest
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install cross-compilation tools
+        uses: taiki-e/setup-cross-toolchain-action@v1
+        with:
+          target: ${{ matrix.target }}
+
+      - name: Update system packages
+        if: matrix.os == 'ubuntu-latest'
+        run: sudo apt-get update && sudo apt-get upgrade -y
+
+      - name: Install required libraries (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get install build-essential llvm clang libgccjit-12-dev
+          sudo ln -s /usr/lib/gcc/x86_64-linux-gnu/12/libgccjit.so /usr/lib/libgccjit.so
+          sudo ln -s /usr/lib/gcc/x86_64-linux-gnu/12/include/libgccjit.h /usr/include/libgccjit.h
+          sudo ln -s /usr/lib/gcc/x86_64-linux-gnu/12/include/libgccjit++.h /usr/include/libgccjit++.h
+
+      - name: Install required libraries (MacOS)
+        if: matrix.os == 'macos-latest'
+        run: brew install llvm gcc libgccjit cmake autoconf automake
+
+      - name: Link libgccjit at global path
+        if: matrix.os == 'macos-latest'
+        run: |
+          ln -s "$(brew --prefix)/lib/gcc/current/libgccjit.0.dylib" "$(brew --prefix)/lib/libgccjit.0.dylib"
+          ln -s "$(brew --prefix)/lib/gcc/current/libgccjit.dylib" "$(brew --prefix)/lib/libgccjit.dylib"
+
+      - name: Export required PATHes
+        if: matrix.os == 'macos-latest'
+        run: |
+          export PATH="$(brew --prefix)/opt/llvm/bin:$PATH"
+          export CPATH="$(brew --prefix)/include"
+          export LIBRARY_PATH="$(brew --prefix)/lib"
+          export LIBRARY_PATH="$LIBRARY_PATH:$(brew --prefix)/lib/gcc/current"
+
+      - name: Set complete profile
+        run: rustup set profile complete
+
+      - name: Change rust channel
+        run: rustup default nightly
+
+      - uses: taiki-e/upload-rust-binary-action@v1
+        with:
+          bin: osmon
+          tar: none
+          zip: all
+          target: ${{ matrix.target }}
+          token: ${{ secrets.GITHUB_TOKEN }}

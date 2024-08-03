@@ -1,0 +1,27 @@
+[package]
+name = "osmon"
+version = "0.4.3"
+edition = "2021"
+homepage = "https://osmon-lang.uz"
+documentation = "https://wiki.osmon-lang.uz"
+repository = "https://github.com/osmon-lang/osmon"
+description = "Static compiler built for Osmon Programming Language"
+authors = ["Sokhibjon Orzikulov <sakhib@orzklv.uz>"]
+readme = "readme.md"
+keywords = ["compiler", "uzbek", "osmon"]
+license = "Apache-2.0"
+exclude = ["target"]
+
+[dependencies]
+parking_lot = "0.12.1"
+wrc = "2.0.0"
+lazy_static = "1.4.0"
+colored = "2.0.0"
+osmojit = "0.4.1"
+clap = { version = "4", features = ["derive"] }
+linked-hash-map = "0.5.6"
+
+[dev-dependencies]
+lang_tester = { git = "https://github.com/softdevteam/lang_tester", branch = "master" }
+tempdir = "0.3"
+
