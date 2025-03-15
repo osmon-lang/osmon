@@ -16,8 +16,8 @@ pkgs.mkShell {
 
   # Set the LD_LIBRARY_PATH so that the dynamic linker can find shared libraries
   LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [
-    (getLibFolder pkgs.gcc)
-    (getLibFolder pkgs.llvmPackages.llvm)
+    pkgs.gcc
+    pkgs.llvmPackages.llvm
     libiconvPath
   ];
 
